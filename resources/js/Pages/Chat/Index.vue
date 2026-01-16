@@ -21,7 +21,33 @@ const isDragging = ref(false);
 const showNewChatModal = ref(false);
 const newChatPrefix = ref('591');
 const newChatPhone = ref('');
+const newChatTemplate = ref('');
+const templates = ref([]);
 const isInitiating = ref(false);
+
+// Fetch templates when modal opens
+watch(showNewChatModal, (val) => {
+    if (val && templates.value.length === 0) {
+        fetchTemplates();
+    }
+});
+
+const fetchTemplates = async () => {
+    try {
+        const response = await axios.get('/debug-templates'); // Using existing route or create new one
+        if (response.data && response.data.data) {
+            templates.value = response.data.data
+                .filter(t => t.status === 'APPROVED')
+                .map(t => ({ name: t.name, language: t.language }));
+            // Set default if exists
+            if (templates.value.length > 0) {
+                newChatTemplate.value = templates.value[0].name;
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching templates', error);
+    }
+};
 
 const totalUnread = computed(() => {
     return contacts.value.reduce((sum, contact) => sum + (contact.unread || 0), 0);
@@ -34,7 +60,8 @@ const initiateChat = async () => {
     try {
         const fullPhone = newChatPrefix.value + newChatPhone.value;
         const response = await axios.post(route('chat.initiate'), {
-            phone: fullPhone
+            phone: fullPhone,
+            template: newChatTemplate.value
         });
 
         const contact = response.data;
@@ -952,6 +979,16 @@ onUnmounted(() => {
                         <input v-model="newChatPhone" type="tel"
                             class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all outline-none"
                             placeholder="70012345" @keyup.enter="initiateChat">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Plantilla de Inicio (Opcional)</label>
+                        <select v-model="newChatTemplate"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all outline-none text-sm">
+                            <option value="">-- Ninguna (Solo crear contacto) --</option>
+                            <option v-for="t in templates" :key="t.name" :value="t.name">{{ t.name }} ({{ t.language }})</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Si el contacto no te ha escrito en 24h, DEBES user una plantilla.</p>
                     </div>
 
                     <button @click="initiateChat" :disabled="isInitiating || !newChatPhone"

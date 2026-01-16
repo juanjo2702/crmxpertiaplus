@@ -101,12 +101,21 @@ class ChatController extends Controller
     }
 
     /**
+     * Get available templates
+     */
+    public function getTemplates(\App\Services\WhatsAppService $whatsapp)
+    {
+        return response()->json($whatsapp->getTemplates());
+    }
+
+    /**
      * Initiate a new chat or get existing one by phone
      */
-    public function initiate(Request $request)
+    public function initiate(Request $request, \App\Services\WhatsAppService $whatsapp)
     {
         $request->validate([
             'phone' => 'required|string',
+            'template' => 'nullable|string'
         ]);
 
         // Clean phone number (remove +, spaces, etc)
@@ -118,13 +127,32 @@ class ChatController extends Controller
             ['name' => $request->input('name', $phone)] // Use phone as default name
         );
 
+        // If template provided, send it
+        if ($request->filled('template')) {
+            try {
+                $whatsapp->sendTemplateMessage($contact->wa_id, $request->template, 'es');
+
+                // Log system message
+                Message::create([
+                    'wam_id' => 'system_' . uniqid(),
+                    'contact_id' => $contact->id,
+                    'type' => 'template',
+                    'body' => "Inicio de conversación (Plantilla: {$request->template})",
+                    'direction' => 'outgoing',
+                    'status' => 'sent'
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to send template: ' . $e->getMessage());
+            }
+        }
+
         // Return structured like getContactsData
         return response()->json([
             'id' => $contact->id,
             'name' => $contact->name ?? $contact->wa_id,
             'avatar' => $contact->profile_pic,
             'time' => $contact->updated_at,
-            'lastMessage' => '',
+            'lastMessage' => $request->filled('template') ? 'Plantilla enviada' : '',
             'unread' => 0,
         ]);
     }
