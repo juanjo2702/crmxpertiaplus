@@ -159,8 +159,17 @@ class WhatsAppService
         $url = "{$this->baseUrl}/{$this->phoneId}/media";
 
         try {
+            // Get file contents and name
+            $fileContents = file_get_contents($filePath);
+            $fileName = basename($filePath);
+
+            // Ensure MIME type is not empty
+            if (empty($mimeType) || $mimeType === 'application/octet-stream') {
+                $mimeType = mime_content_type($filePath) ?: 'application/octet-stream';
+            }
+
             $response = Http::withToken($this->token)
-                ->attach('file', file_get_contents($filePath), basename($filePath))
+                ->attach('file', $fileContents, $fileName, ['Content-Type' => $mimeType])
                 ->post($url, [
                     'messaging_product' => 'whatsapp',
                     'type' => $mimeType

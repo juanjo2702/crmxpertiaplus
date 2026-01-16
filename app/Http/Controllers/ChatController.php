@@ -7,6 +7,7 @@ use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class ChatController extends Controller
 {
@@ -153,14 +154,14 @@ class ChatController extends Controller
             $wamId = 'local_' . uniqid();
 
             try {
-                $mediaId = $whatsapp->uploadMedia($file->path(), $file->getMimeType());
+                $mediaId = $whatsapp->uploadMedia($file->getRealPath(), $file->getClientMimeType());
 
                 if ($mediaId) {
                     $response = $whatsapp->sendImageMessage($contact->wa_id, $mediaId, $caption);
                     $wamId = $response['messages'][0]['id'] ?? $wamId;
                 }
             } catch (\Exception $e) {
-                \Log::warning('WhatsApp image upload failed: ' . $e->getMessage());
+                Log::warning('WhatsApp image upload failed: ' . $e->getMessage());
             }
 
             // Save to DB (even if WhatsApp failed)
@@ -180,7 +181,7 @@ class ChatController extends Controller
 
             return response()->json($message);
         } catch (\Exception $e) {
-            \Log::error('sendImage error: ' . $e->getMessage());
+            Log::error('sendImage error: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -208,14 +209,14 @@ class ChatController extends Controller
             $wamId = 'local_' . uniqid();
 
             try {
-                $mediaId = $whatsapp->uploadMedia($file->path(), $file->getMimeType());
+                $mediaId = $whatsapp->uploadMedia($file->getRealPath(), $file->getClientMimeType());
 
                 if ($mediaId) {
                     $response = $whatsapp->sendDocumentMessage($contact->wa_id, $mediaId, $filename);
                     $wamId = $response['messages'][0]['id'] ?? $wamId;
                 }
             } catch (\Exception $e) {
-                \Log::warning('WhatsApp upload failed, saving locally only: ' . $e->getMessage());
+                Log::warning('WhatsApp upload failed, saving locally only: ' . $e->getMessage());
             }
 
             // Save to DB (even if WhatsApp failed)
@@ -235,7 +236,7 @@ class ChatController extends Controller
 
             return response()->json($message);
         } catch (\Exception $e) {
-            \Log::error('sendDocument error: ' . $e->getMessage());
+            Log::error('sendDocument error: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
