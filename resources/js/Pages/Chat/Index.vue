@@ -32,7 +32,25 @@ const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep
 /**
  * Format date WhatsApp-style (relative)
  */
-const formatRelativeDate = (dateString) => {
+/**
+ * Format time only (HH:MM)
+ */
+const formatTime = (dateString) => {
+    if (!dateString) return '';
+    let date;
+    if (dateString.includes('T') && (dateString.includes('+') || dateString.includes('Z'))) {
+        date = new Date(dateString);
+    } else {
+        date = new Date(dateString.replace(' ', 'T') + 'Z');
+    }
+    if (isNaN(date.getTime())) return dateString;
+    return date.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
+};
+
+/**
+ * Format date WhatsApp-style (relative)
+ */
+const formatRelativeDate = (dateString, showTimeToday = false) => {
     if (!dateString) return '';
 
     let date;
@@ -49,27 +67,12 @@ const formatRelativeDate = (dateString) => {
     const messageDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const diffDays = Math.floor((today - messageDay) / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return 'Hoy';
+    if (diffDays === 0) return showTimeToday ? formatTime(dateString) : 'Hoy';
     if (diffDays === 1) return 'Ayer';
     if (diffDays === 2) return 'Anteayer';
     if (diffDays < 7) return dayNames[date.getDay()];
 
     return `${date.getDate()} ${monthNames[date.getMonth()]}`;
-};
-
-/**
- * Format time only (HH:MM)
- */
-const formatTime = (dateString) => {
-    if (!dateString) return '';
-    let date;
-    if (dateString.includes('T') && (dateString.includes('+') || dateString.includes('Z'))) {
-        date = new Date(dateString);
-    } else {
-        date = new Date(dateString.replace(' ', 'T') + 'Z');
-    }
-    if (isNaN(date.getTime())) return dateString;
-    return date.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
 };
 
 /**
@@ -183,7 +186,7 @@ const fetchContacts = async () => {
         const response = await axios.get(route('chat.contacts'));
         contacts.value = response.data.map(contact => ({
             ...contact,
-            relativeDate: formatRelativeDate(contact.time),
+            relativeDate: formatRelativeDate(contact.time, true),
             formattedTime: formatTime(contact.time)
         }));
     } catch (error) {
@@ -606,7 +609,7 @@ onUnmounted(() => {
                                             <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                                                 :class="getFileIconBg(item)">
                                                 <span class="text-white text-xs font-bold">{{ getFileIconText(item)
-                                                }}</span>
+                                                    }}</span>
                                             </div>
                                             <!-- File Info -->
                                             <div class="flex-1 min-w-0">
