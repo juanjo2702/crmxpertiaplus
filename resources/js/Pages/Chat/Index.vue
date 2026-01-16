@@ -17,6 +17,51 @@ const imageInput = ref(null);
 const documentInput = ref(null);
 const isDragging = ref(false);
 
+// New Chat Modal State
+const showNewChatModal = ref(false);
+const newChatPrefix = ref('591');
+const newChatPhone = ref('');
+const isInitiating = ref(false);
+
+const totalUnread = computed(() => {
+    return contacts.value.reduce((sum, contact) => sum + (contact.unread || 0), 0);
+});
+
+const initiateChat = async () => {
+    if (!newChatPhone.value) return;
+
+    isInitiating.value = true;
+    try {
+        const fullPhone = newChatPrefix.value + newChatPhone.value;
+        const response = await axios.post(route('chat.initiate'), {
+            phone: fullPhone
+        });
+
+        const contact = response.data;
+
+        // Add to contacts if not exists
+        const existingIndex = contacts.value.findIndex(c => c.id === contact.id);
+        if (existingIndex === -1) {
+            contacts.value.unshift({
+                ...contact,
+                relativeDate: formatRelativeDate(contact.time, true),
+                formattedTime: formatTime(contact.time)
+            });
+            selectContact(contacts.value[0]);
+        } else {
+            selectContact(contacts.value[existingIndex]);
+        }
+
+        showNewChatModal.value = false;
+        newChatPhone.value = '';
+    } catch (error) {
+        console.error('Error initiating chat', error);
+        alert('Error al iniciar chat');
+    } finally {
+        isInitiating.value = false;
+    }
+};
+
 // Preview modal state
 const showPreview = ref(false);
 const previewFiles = ref([]);
@@ -495,7 +540,23 @@ onUnmounted(() => {
             <div class="w-80 bg-white border-r border-gray-200 flex flex-col shadow-sm">
                 <!-- Header -->
                 <div class="p-4 bg-gradient-to-r from-emerald-600 to-teal-600">
-                    <h2 class="text-white font-semibold text-lg mb-3">Conversaciones</h2>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-white font-semibold text-lg">Conversaciones</h2>
+                            <span v-if="totalUnread > 0"
+                                class="bg-white text-emerald-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                                {{ totalUnread }}
+                            </span>
+                        </div>
+                        <button @click="showNewChatModal = true"
+                            class="p-1.5 bg-white/20 hover:bg-white/30 rounded-full text-white transition-colors"
+                            title="Nuevo Chat">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                        </button>
+                    </div>
                     <div class="relative">
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none"
                             stroke="currentColor" viewBox="0 0 24 24">
@@ -609,7 +670,7 @@ onUnmounted(() => {
                                             <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                                                 :class="getFileIconBg(item)">
                                                 <span class="text-white text-xs font-bold">{{ getFileIconText(item)
-                                                    }}</span>
+                                                }}</span>
                                             </div>
                                             <!-- File Info -->
                                             <div class="flex-1 min-w-0">
@@ -858,6 +919,47 @@ onUnmounted(() => {
                             </svg>
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Chat Modal -->
+        <div v-if="showNewChatModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl max-w-sm w-full shadow-2xl overflow-hidden animate-fade-in-up">
+                <div class="p-4 bg-emerald-600 flex justify-between items-center">
+                    <h3 class="text-white font-semibold text-lg">Iniciar Conversación</h3>
+                    <button @click="showNewChatModal = false" class="text-white/80 hover:text-white transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Prefijo País</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">+</span>
+                            <input v-model="newChatPrefix" type="text"
+                                class="w-full pl-6 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all outline-none"
+                                placeholder="591">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Número de Teléfono</label>
+                        <input v-model="newChatPhone" type="tel"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all outline-none"
+                            placeholder="70012345" @keyup.enter="initiateChat">
+                    </div>
+
+                    <button @click="initiateChat" :disabled="isInitiating || !newChatPhone"
+                        class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        <span v-if="isInitiating"
+                            class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                        {{ isInitiating ? 'Iniciando...' : 'Iniciar Chat' }}
+                    </button>
                 </div>
             </div>
         </div>

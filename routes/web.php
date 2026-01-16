@@ -44,6 +44,10 @@ Route::get('/chat', [ChatController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('chat');
 
+Route::post('/chat/initiate', [ChatController::class, 'initiate'])
+    ->middleware(['auth', 'verified'])
+    ->name('chat.initiate');
+
 Route::get('/chat/contacts', [ChatController::class, 'contacts'])
     ->middleware(['auth', 'verified'])
     ->name('chat.contacts');

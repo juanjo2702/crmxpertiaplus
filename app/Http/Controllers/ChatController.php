@@ -100,6 +100,35 @@ class ChatController extends Controller
         return response()->json(['marked' => $updated]);
     }
 
+    /**
+     * Initiate a new chat or get existing one by phone
+     */
+    public function initiate(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required|string',
+        ]);
+
+        // Clean phone number (remove +, spaces, etc)
+        $phone = preg_replace('/[^0-9]/', '', $request->phone);
+
+        // Find or create contact
+        $contact = Contact::firstOrCreate(
+            ['wa_id' => $phone],
+            ['name' => $request->input('name', $phone)] // Use phone as default name
+        );
+
+        // Return structured like getContactsData
+        return response()->json([
+            'id' => $contact->id,
+            'name' => $contact->name ?? $contact->wa_id,
+            'avatar' => $contact->profile_pic,
+            'time' => $contact->updated_at,
+            'lastMessage' => '',
+            'unread' => 0,
+        ]);
+    }
+
     public function store(Request $request, Contact $contact, \App\Services\WhatsAppService $whatsapp)
     {
         $request->validate([
