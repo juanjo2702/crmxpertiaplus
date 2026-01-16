@@ -513,8 +513,7 @@ onUnmounted(() => {
                         <!-- Hidden file inputs with multiple -->
                         <input type="file" ref="imageInput" accept="image/*" multiple class="hidden"
                             @change="handleImageSelect" />
-                        <input type="file" ref="documentInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" multiple
-                            class="hidden" @change="handleDocumentSelect" />
+                        <input type="file" ref="documentInput" multiple class="hidden" @change="handleDocumentSelect" />
 
                         <!-- Image button -->
                         <button @click="$refs.imageInput.click()"
