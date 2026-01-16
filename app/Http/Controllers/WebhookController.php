@@ -98,15 +98,18 @@ class WebhookController extends Controller
         } elseif (in_array($type, ['video', 'audio', 'document', 'sticker'])) {
             // Handle other media types similarly
             $mediaId = $msgData[$type]['id'] ?? null;
+            $filename = $msgData[$type]['filename'] ?? null;
 
             if ($mediaId) {
                 $mediaInfo = $this->whatsapp->downloadMedia($mediaId);
                 if ($mediaInfo) {
-                    $body = $mediaInfo['url'];
+                    $body = $filename ?: $mediaInfo['url'];
                     $metadata['local_path'] = $mediaInfo['path'];
+                    $metadata['local_url'] = $mediaInfo['url'];
                     $metadata['mime_type'] = $mediaInfo['mime_type'];
+                    $metadata['filename'] = $filename;
                 } else {
-                    $body = "[Media: $type]";
+                    $body = $filename ?: "[Media: $type]";
                 }
             }
         } else {

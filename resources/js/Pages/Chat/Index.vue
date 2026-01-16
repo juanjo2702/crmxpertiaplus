@@ -247,9 +247,19 @@ const openImage = (url) => {
 };
 
 // Document helper functions
+const getDocumentFileName = (item) => {
+    // Priority: metadata.filename > item.text (if not URL) > extract from URL
+    if (item.metadata?.filename) return item.metadata.filename;
+    if (item.text && !item.text.includes('/')) return item.text;
+    if (item.text?.includes('/')) {
+        const parts = item.text.split('/');
+        return parts[parts.length - 1] || 'Documento';
+    }
+    return 'Documento';
+};
+
 const getFileName = (text) => {
     if (!text) return 'Documento';
-    // If it's a URL, extract filename from path
     if (text.includes('/')) {
         const parts = text.split('/');
         return parts[parts.length - 1] || 'Documento';
@@ -257,9 +267,8 @@ const getFileName = (text) => {
     return text || 'Documento';
 };
 
-const getFileExtension = (text) => {
-    if (!text) return 'Archivo';
-    const name = getFileName(text);
+const getFileExtension = (item) => {
+    const name = getDocumentFileName(item);
     const ext = name.split('.').pop()?.toUpperCase() || 'Archivo';
     return ext;
 };
@@ -575,8 +584,8 @@ onUnmounted(() => {
                                             <!-- File Info -->
                                             <div class="flex-1 min-w-0">
                                                 <p class="text-sm font-medium text-gray-800 truncate">{{
-                                                    getFileName(item.text) }}</p>
-                                                <p class="text-xs text-gray-500 mt-0.5">{{ getFileExtension(item.text)
+                                                    getDocumentFileName(item) }}</p>
+                                                <p class="text-xs text-gray-500 mt-0.5">{{ getFileExtension(item)
                                                 }}</p>
                                             </div>
                                         </div>
