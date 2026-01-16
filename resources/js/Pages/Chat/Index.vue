@@ -246,6 +246,38 @@ const openImage = (url) => {
     window.open(url, '_blank');
 };
 
+// Document helper functions
+const getFileName = (text) => {
+    if (!text) return 'Documento';
+    // If it's a URL, extract filename from path
+    if (text.includes('/')) {
+        const parts = text.split('/');
+        return parts[parts.length - 1] || 'Documento';
+    }
+    return text || 'Documento';
+};
+
+const getFileExtension = (text) => {
+    if (!text) return 'Archivo';
+    const name = getFileName(text);
+    const ext = name.split('.').pop()?.toUpperCase() || 'Archivo';
+    return ext;
+};
+
+const getDocumentUrl = (item) => {
+    // Check metadata for local_url first
+    if (item.metadata?.local_url) return item.metadata.local_url;
+    // If text looks like a URL, use it
+    if (item.text?.startsWith('http')) return item.text;
+    // Otherwise construct from storage
+    return `/storage/chat-media/${item.text}`;
+};
+
+const openDocument = (item) => {
+    const url = getDocumentUrl(item);
+    window.open(url, '_blank');
+};
+
 // Send a single image file
 const sendSingleImage = async (file, caption = '') => {
     const formData = new FormData();
@@ -527,6 +559,40 @@ onUnmounted(() => {
                                         <p v-if="item.metadata?.caption" class="text-[15px] text-gray-800 mt-2">{{
                                             item.metadata.caption }}</p>
                                     </template>
+
+                                    <!-- Document Message -->
+                                    <template v-else-if="item.msgType === 'document'">
+                                        <div
+                                            class="flex items-start gap-3 min-w-[220px] p-2 bg-gray-50 rounded-lg border border-gray-200">
+                                            <!-- PDF Icon -->
+                                            <div
+                                                class="flex-shrink-0 w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                                                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path
+                                                        d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM8.5 15c-.828 0-1.5-.672-1.5-1.5S7.672 12 8.5 12s1.5.672 1.5 1.5S9.328 15 8.5 15z" />
+                                                </svg>
+                                            </div>
+                                            <!-- File Info -->
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-gray-800 truncate">{{
+                                                    getFileName(item.text) }}</p>
+                                                <p class="text-xs text-gray-500 mt-0.5">{{ getFileExtension(item.text)
+                                                }}</p>
+                                            </div>
+                                        </div>
+                                        <!-- Action Buttons -->
+                                        <div class="flex gap-4 mt-2 text-sm">
+                                            <button @click="openDocument(item)"
+                                                class="text-emerald-600 hover:text-emerald-700 font-medium">
+                                                Abrir
+                                            </button>
+                                            <a :href="getDocumentUrl(item)" download
+                                                class="text-emerald-600 hover:text-emerald-700 font-medium">
+                                                Descargar
+                                            </a>
+                                        </div>
+                                    </template>
+
                                     <!-- Text Message -->
                                     <p v-else class="text-[15px] text-gray-800 break-words">{{ item.text }}</p>
                                     <div class="flex items-center justify-end gap-1 mt-1">
