@@ -16,6 +16,13 @@ const searchQuery = ref('');
 const imageInput = ref(null);
 const documentInput = ref(null);
 const isDragging = ref(false);
+
+// Preview modal state
+const showPreview = ref(false);
+const previewFiles = ref([]);
+const previewCaption = ref('');
+const currentPreviewIndex = ref(0);
+
 let pollingInterval = null;
 
 // Day names in Spanish
@@ -240,9 +247,10 @@ const openImage = (url) => {
 };
 
 // Send a single image file
-const sendSingleImage = async (file) => {
+const sendSingleImage = async (file, caption = '') => {
     const formData = new FormData();
     formData.append('image', file);
+    if (caption) formData.append('caption', caption);
 
     const tempId = Date.now() + Math.random();
     const previewUrl = URL.createObjectURL(file);
@@ -252,7 +260,8 @@ const sendSingleImage = async (file) => {
         sender: 'me',
         time: new Date().toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' }),
         rawDate: new Date().toISOString(),
-        msgType: 'image'
+        msgType: 'image',
+        metadata: caption ? { caption } : null
     });
 
     try {
@@ -289,32 +298,80 @@ const sendSingleDocument = async (file) => {
     }
 };
 
-const handleImageSelect = async (event) => {
+const handleImageSelect = (event) => {
     const files = Array.from(event.target.files);
     if (!files.length || !selectedContact.value) return;
-
-    isSending.value = true;
-
-    for (const file of files) {
-        await sendSingleImage(file);
-    }
-
-    isSending.value = false;
+    openPreviewModal(files);
     event.target.value = '';
 };
 
-const handleDocumentSelect = async (event) => {
+const handleDocumentSelect = (event) => {
     const files = Array.from(event.target.files);
     if (!files.length || !selectedContact.value) return;
+    openPreviewModal(files);
+    event.target.value = '';
+};
 
+// Preview modal functions
+const openPreviewModal = (files) => {
+    previewFiles.value = files.map(file => ({
+        file,
+        name: file.name,
+        type: file.type,
+        isImage: file.type.startsWith('image/'),
+        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+        size: (file.size / 1024).toFixed(1) + ' KB'
+    }));
+    currentPreviewIndex.value = 0;
+    previewCaption.value = '';
+    showPreview.value = true;
+};
+
+const closePreviewModal = () => {
+    // Revoke object URLs to free memory
+    previewFiles.value.forEach(f => {
+        if (f.preview) URL.revokeObjectURL(f.preview);
+    });
+    previewFiles.value = [];
+    previewCaption.value = '';
+    showPreview.value = false;
+};
+
+const removePreviewFile = (index) => {
+    if (previewFiles.value[index].preview) {
+        URL.revokeObjectURL(previewFiles.value[index].preview);
+    }
+    previewFiles.value.splice(index, 1);
+    if (previewFiles.value.length === 0) {
+        closePreviewModal();
+    } else if (currentPreviewIndex.value >= previewFiles.value.length) {
+        currentPreviewIndex.value = previewFiles.value.length - 1;
+    }
+};
+
+const sendPreviewFiles = async () => {
+    if (!previewFiles.value.length || !selectedContact.value) return;
+
+    showPreview.value = false;
     isSending.value = true;
 
-    for (const file of files) {
-        await sendSingleDocument(file);
+    const caption = previewCaption.value;
+
+    for (const item of previewFiles.value) {
+        if (item.isImage) {
+            await sendSingleImage(item.file, caption);
+        } else {
+            await sendSingleDocument(item.file);
+        }
     }
 
+    // Clean up
+    previewFiles.value.forEach(f => {
+        if (f.preview) URL.revokeObjectURL(f.preview);
+    });
+    previewFiles.value = [];
+    previewCaption.value = '';
     isSending.value = false;
-    event.target.value = '';
 };
 
 // Drag and drop handlers
@@ -327,7 +384,7 @@ const handleDragLeave = () => {
     isDragging.value = false;
 };
 
-const handleDrop = async (event) => {
+const handleDrop = (event) => {
     event.preventDefault();
     isDragging.value = false;
 
@@ -336,17 +393,7 @@ const handleDrop = async (event) => {
     const files = Array.from(event.dataTransfer.files);
     if (!files.length) return;
 
-    isSending.value = true;
-
-    for (const file of files) {
-        if (file.type.startsWith('image/')) {
-            await sendSingleImage(file);
-        } else {
-            await sendSingleDocument(file);
-        }
-    }
-
-    isSending.value = false;
+    openPreviewModal(files);
 };
 
 onMounted(() => {
@@ -626,6 +673,87 @@ onUnmounted(() => {
                         class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors shadow-sm">
                         Guardar cambios
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Preview Modal -->
+        <div v-if="showPreview" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+            <div class="bg-[#1f2c34] rounded-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-4 border-b border-gray-700">
+                    <div class="flex items-center gap-3">
+                        <button @click="closePreviewModal" class="p-2 hover:bg-gray-700 rounded-full transition-colors">
+                            <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <span class="text-white font-medium">{{ previewFiles.length }} archivo{{ previewFiles.length > 1
+                            ? 's' :
+                            '' }}</span>
+                    </div>
+                </div>
+
+                <!-- Preview Area -->
+                <div class="flex-1 overflow-y-auto p-4 bg-[#0b141a]">
+                    <!-- Current file preview -->
+                    <div v-if="previewFiles[currentPreviewIndex]"
+                        class="flex items-center justify-center min-h-[200px]">
+                        <img v-if="previewFiles[currentPreviewIndex].isImage"
+                            :src="previewFiles[currentPreviewIndex].preview"
+                            class="max-w-full max-h-[300px] rounded-lg object-contain" />
+                        <div v-else class="text-center">
+                            <svg class="w-20 h-20 mx-auto text-gray-500 mb-3" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p class="text-white font-medium">{{ previewFiles[currentPreviewIndex].name }}</p>
+                            <p class="text-gray-400 text-sm">{{ previewFiles[currentPreviewIndex].size }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Thumbnails if multiple files -->
+                    <div v-if="previewFiles.length > 1" class="flex gap-2 mt-4 justify-center flex-wrap">
+                        <div v-for="(item, index) in previewFiles" :key="index"
+                            class="relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all"
+                            :class="currentPreviewIndex === index ? 'border-emerald-500' : 'border-transparent'"
+                            @click="currentPreviewIndex = index">
+                            <img v-if="item.isImage" :src="item.preview" class="w-16 h-16 object-cover" />
+                            <div v-else class="w-16 h-16 bg-gray-700 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <!-- Remove button -->
+                            <button @click.stop="removePreviewFile(index)"
+                                class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
+                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Caption Input -->
+                <div class="p-4 bg-[#1f2c34] border-t border-gray-700">
+                    <div class="flex items-center gap-3">
+                        <input v-model="previewCaption" type="text" placeholder="Agregar un comentario..."
+                            class="flex-1 bg-[#2a3942] text-white px-4 py-3 rounded-full border-0 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder-gray-400"
+                            @keyup.enter="sendPreviewFiles" />
+                        <button @click="sendPreviewFiles" :disabled="isSending"
+                            class="p-3 bg-emerald-500 hover:bg-emerald-600 rounded-full transition-colors disabled:opacity-50">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
