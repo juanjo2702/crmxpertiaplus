@@ -25,13 +25,13 @@ onMounted(() => {
 
 const whatsappLink = (plan) => {
     const phone = '59163979494';
-    const text = `Hola, estoy interesado en el plan ${plan} de SOLVEIT.`;
+    const text = `Hola, estoy interesado en el plan ${plan} de SOLVEIT CRM.`;
     return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 };
 </script>
 
 <template>
-    <Head title="SOLVEIT - Ingeniería de Software a Medida" />
+    <Head title="SOLVEIT - CRM WhatsApp Multi-Tenant" />
 
     <div class="min-h-screen bg-[#050510] text-white selection:bg-cyan-500 selection:text-white font-sans overflow-x-hidden">
 
@@ -42,14 +42,13 @@ const whatsappLink = (plan) => {
                     <!-- Logo -->
                     <div class="flex items-center gap-3">
                         <img src="/logo-solveit.png" alt="SOLVEIT" class="h-10 w-auto" />
-                        <!-- <span class="text-2xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600 hidden sm:block">SOLVEIT</span> -->
                     </div>
 
                     <!-- Desktop Menu -->
                     <div class="hidden md:flex items-center space-x-8">
-                        <a href="#services" class="text-sm font-medium text-gray-300 hover:text-cyan-400 transition-colors">Servicios</a>
-                        <a href="#pricing" class="text-sm font-medium text-gray-300 hover:text-cyan-400 transition-colors">Paquetes</a>
-                        <a href="#about" class="text-sm font-medium text-gray-300 hover:text-cyan-400 transition-colors">Nosotros</a>
+                        <a href="#features" class="text-sm font-medium text-gray-300 hover:text-cyan-400 transition-colors">Características</a>
+                        <a href="#pricing" class="text-sm font-medium text-gray-300 hover:text-cyan-400 transition-colors">Planes</a>
+                        <a href="#contact" class="text-sm font-medium text-gray-300 hover:text-cyan-400 transition-colors">Contacto</a>
                     </div>
 
                     <!-- Auth/Contact -->
@@ -59,10 +58,6 @@ const whatsappLink = (plan) => {
                             <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             <span class="relative text-sm font-bold text-white group-hover:text-cyan-100">Iniciar Sesión</span>
                         </Link>
-                        <a href="#contact"
-                            class="hidden sm:flex px-6 py-2 rounded-full bg-gradient-to-r from-cyan-600 to-blue-700 text-white text-sm font-bold shadow-lg shadow-cyan-900/20 hover:shadow-cyan-600/40 hover:-translate-y-0.5 transition-all">
-                            Contacto
-                        </a>
                     </div>
                 </div>
             </div>
@@ -85,17 +80,16 @@ const whatsappLink = (plan) => {
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                                 <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
                             </span>
-                            Innovación Digital
+                            CRM WhatsApp Multi-Tenant
                         </div>
 
                         <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-tight">
-                            Ingeniería de <br/>
-                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 animate-gradient-x">Software</span> <br/>
-                            A tu Medida
+                            Centraliza tu <br/>
+                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 animate-gradient-x">Comunicación</span>
                         </h1>
 
                         <p class="text-lg sm:text-xl text-gray-400 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                            Desde arquitecturas robustas hasta inteligencia artificial aplicada. Diseñamos el ecosistema tecnológico que tu empresa necesita para escalar sin límites.
+                            Organiza, automatiza y escala tus interacciones por WhatsApp. La plataforma SaaS diseñada para empresas que buscan control total.
                         </p>
 
                         <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -103,29 +97,32 @@ const whatsappLink = (plan) => {
                                 class="px-8 py-4 rounded-full bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white font-bold text-lg shadow-[0_0_30px_rgba(6,182,212,0.4)] hover:shadow-[0_0_50px_rgba(6,182,212,0.6)] transition-all transform hover:-translate-y-1">
                                 Ver Planes
                             </a>
-                            <a href="https://wa.me/59163979494?text=Hola,%20quisiera%20asesoramiento%20personalizado" target="_blank"
+                            <a href="https://wa.me/59163979494?text=Hola,%20quisiera%20asesoramiento%20sobre%20el%20CRM" target="_blank"
                                 class="px-8 py-4 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-lg backdrop-blur-md transition-all flex items-center justify-center gap-2 group">
-                                <svg class="w-5 h-5 text-green-500 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.017-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                                Asesoría Gratis
+                                <svg class="w-5 h-5 text-green-500 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.017-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                                Contactar Ventas
                             </a>
                         </div>
                     </div>
 
                     <!-- 3D Mockup Visual -->
                     <div class="relative lg:-mr-20 z-0">
-                        <div class="relative rounded-xl bg-gradient-to-tr from-cyan-500/20 to-purple-500/20 p-2 backdrop-blur-sm animate-float">
-                            <div class="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 to-blue-600/10 rounded-xl blur-xl"></div>
-                            <img src="/dashboard-mockup.png" alt="Dashboard Mockup" class="relative w-full rounded-lg shadow-2xl border border-white/10" />
+                        <!-- Removed 'screenshot' styling for seamless look -->
+                        <div class="relative animate-float">
+                             <!-- Glow behind image -->
+                            <div class="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 to-blue-600/20 rounded-[2rem] blur-2xl transform scale-90 translate-y-4"></div>
 
-                            <!-- Floating Elements -->
-                            <div class="absolute -bottom-10 -left-10 p-4 bg-[#1f2937]/90 backdrop-blur-md border border-white/10 rounded-xl shadow-xl animate-float-delayed hidden sm:block">
+                            <img src="/dashboard-mockup.png" alt="Dashboard Interface" class="relative w-full rounded-2xl shadow-2xl border border-white/10" />
+
+                            <!-- Floating Metric Card -->
+                            <div class="absolute -bottom-6 -left-6 p-4 bg-[#1f2937]/90 backdrop-blur-md border border-white/10 rounded-xl shadow-xl animate-float-delayed hidden sm:block">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
                                         <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                                     </div>
                                     <div>
-                                        <p class="text-xs text-gray-400">Rendimiento</p>
-                                        <p class="text-lg font-bold text-white">+147%</p>
+                                        <p class="text-xs text-gray-400">Conversiones</p>
+                                        <p class="text-lg font-bold text-white">+85%</p>
                                     </div>
                                 </div>
                             </div>
@@ -135,43 +132,40 @@ const whatsappLink = (plan) => {
             </div>
         </section>
 
-        <!-- Services Section with Cards -->
-        <section id="services" class="py-20 bg-[#080816]">
+        <!-- Features Grid -->
+        <section id="features" class="py-20 bg-[#080816]">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-5xl font-bold mb-6">Soluciones Integrales</h2>
-                    <p class="text-gray-400 max-w-2xl mx-auto text-lg">Creamos ecosistemas digitales que conectan cada aspecto de tu negocio.</p>
+                    <h2 class="text-3xl md:text-5xl font-bold mb-6">Plataforma Todo en Uno</h2>
+                    <p class="text-gray-400 max-w-2xl mx-auto text-lg">Todo lo que necesitas para gestionar tu comunicación empresarial en un solo lugar.</p>
                 </div>
 
                 <div class="grid md:grid-cols-3 gap-8">
-                    <!-- Service 1 -->
-                    <div class="group relative p-8 rounded-3xl bg-[#0f101f] border border-white/5 hover:border-cyan-500/30 transition-all duration-500 overflow-hidden hover:-translate-y-2">
-                        <div class="absolute inset-0 bg-gradient-to-br from-cyan-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <div class="w-16 h-16 rounded-2xl bg-cyan-900/20 flex items-center justify-center mb-8 border border-cyan-500/20 group-hover:scale-110 transition-transform duration-500">
-                            <svg class="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    <!-- Feature 1 -->
+                    <div class="p-8 rounded-3xl bg-[#0f101f] border border-white/5 hover:border-cyan-500/30 transition-all duration-300">
+                        <div class="w-14 h-14 rounded-xl bg-cyan-900/20 flex items-center justify-center mb-6 border border-cyan-500/20">
+                            <svg class="w-7 h-7 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                         </div>
-                        <h3 class="text-2xl font-bold mb-4 text-white group-hover:text-cyan-400 transition-colors">Desarrollo Web</h3>
-                        <p class="text-gray-400 leading-relaxed group-hover:text-gray-300">Portales corporativos y aplicaciones web de alto rendimiento con UX/UI de vanguardia.</p>
+                        <h3 class="text-xl font-bold mb-3 text-white">Multi-Tenant</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">Gestión independiente para múltiples organizaciones o departamentos. Datos aislados y seguros.</p>
                     </div>
 
-                    <!-- Service 2 -->
-                    <div class="group relative p-8 rounded-3xl bg-[#0f101f] border border-white/5 hover:border-blue-500/30 transition-all duration-500 overflow-hidden hover:-translate-y-2">
-                        <div class="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <div class="w-16 h-16 rounded-2xl bg-blue-900/20 flex items-center justify-center mb-8 border border-blue-500/20 group-hover:scale-110 transition-transform duration-500">
-                            <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+                    <!-- Feature 2 -->
+                    <div class="p-8 rounded-3xl bg-[#0f101f] border border-white/5 hover:border-blue-500/30 transition-all duration-300">
+                        <div class="w-14 h-14 rounded-xl bg-blue-900/20 flex items-center justify-center mb-6 border border-blue-500/20">
+                            <svg class="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
                         </div>
-                        <h3 class="text-2xl font-bold mb-4 text-white group-hover:text-blue-400 transition-colors">Sistemas & CRM</h3>
-                        <p class="text-gray-400 leading-relaxed group-hover:text-gray-300">Software a medida para gestión de clientes, inventarios y procesos internos complejos.</p>
+                        <h3 class="text-xl font-bold mb-3 text-white">Chat Centralizado</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">Interfaz unificada para responder mensajes. Envío de imágenes, documentos y plantillas aprobadas.</p>
                     </div>
 
-                    <!-- Service 3 -->
-                    <div class="group relative p-8 rounded-3xl bg-[#0f101f] border border-white/5 hover:border-purple-500/30 transition-all duration-500 overflow-hidden hover:-translate-y-2">
-                        <div class="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <div class="w-16 h-16 rounded-2xl bg-purple-900/20 flex items-center justify-center mb-8 border border-purple-500/20 group-hover:scale-110 transition-transform duration-500">
-                            <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                    <!-- Feature 3 -->
+                    <div class="p-8 rounded-3xl bg-[#0f101f] border border-white/5 hover:border-purple-500/30 transition-all duration-300">
+                        <div class="w-14 h-14 rounded-xl bg-purple-900/20 flex items-center justify-center mb-6 border border-purple-500/20">
+                            <svg class="w-7 h-7 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                         </div>
-                        <h3 class="text-2xl font-bold mb-4 text-white group-hover:text-purple-400 transition-colors">Automatización</h3>
-                        <p class="text-gray-400 leading-relaxed group-hover:text-gray-300">Bots inteligentes, integración de WhatsApp y flujos de trabajo automatizados 24/7.</p>
+                        <h3 class="text-xl font-bold mb-3 text-white">Analítica Real</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">Métricas detalladas de mensajes enviados, recibidos y tiempos de respuesta por agente.</p>
                     </div>
                 </div>
             </div>
@@ -183,8 +177,8 @@ const whatsappLink = (plan) => {
 
             <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-20">
-                    <span class="text-cyan-400 font-bold tracking-wider uppercase text-sm">Planes y Precios</span>
-                    <h2 class="text-4xl md:text-5xl font-bold mt-2 mb-6 text-white">Elige cómo crecer</h2>
+                    <span class="text-cyan-400 font-bold tracking-wider uppercase text-sm">Planes de Suscripción</span>
+                    <h2 class="text-4xl md:text-5xl font-bold mt-2 mb-6 text-white">Escala con nosotros</h2>
                 </div>
 
                 <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -192,36 +186,37 @@ const whatsappLink = (plan) => {
                     <div class="relative p-8 rounded-3xl bg-[#0f101f]/50 border border-white/5 backdrop-blur-sm hover:border-white/10 transition-all hover:bg-[#0f101f]">
                         <h3 class="text-xl font-bold text-gray-300 mb-2">Starter</h3>
                         <div class="flex items-baseline gap-1 my-6">
-                            <span class="text-4xl font-bold text-white">Consultar</span>
+                            <span class="text-4xl font-bold text-white">$29</span>
+                            <span class="text-gray-400">/mes</span>
                         </div>
                         <ul class="space-y-4 mb-8 text-gray-400 text-sm">
-                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Landing Page de Alto Impacto</li>
-                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Dominio Personalizado</li>
-                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Botón de WhatsApp Integrado</li>
-                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Entrega en 72 horas</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 500 Contactos</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 2 Usuarios</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 5,000 Mensajes/mes</li>
                         </ul>
                         <a :href="whatsappLink('Starter')" target="_blank"
                             class="block w-full py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-center text-white font-bold transition-all">
-                            Contratar Starter
+                            Elegir Starter
                         </a>
                     </div>
 
-                    <!-- Growth Plan (Featured) -->
+                    <!-- Business Plan (Featured) -->
                     <div class="relative p-8 rounded-3xl bg-[#131426] border border-cyan-500/30 shadow-[0_0_50px_rgba(6,182,212,0.1)] transform md:-translate-y-4">
-                        <div class="absolute top-0 right-0 bg-cyan-500 text-black text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl">POPULAR</div>
-                        <h3 class="text-xl font-bold text-white mb-2">Growth</h3>
+                        <div class="absolute top-0 right-0 bg-cyan-500 text-black text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl">RECOMENDADO</div>
+                        <h3 class="text-xl font-bold text-white mb-2">Business</h3>
                         <div class="flex items-baseline gap-1 my-6">
-                            <span class="text-4xl font-bold text-white">Consultar</span>
+                            <span class="text-4xl font-bold text-white">$79</span>
+                            <span class="text-gray-400">/mes</span>
                         </div>
                         <ul class="space-y-4 mb-8 text-gray-300 text-sm">
-                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Sitio Web Corporativo (5+ Páginas)</li>
-                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> CMS Autoadministrable</li>
-                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Integración CRM Básico</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 5,000 Contactos</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 10 Usuarios</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 50,000 Mensajes/mes</li>
                             <li class="flex items-center gap-3"><svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Soporte Prioritario</li>
                         </ul>
-                        <a :href="whatsappLink('Growth')" target="_blank"
+                        <a :href="whatsappLink('Business')" target="_blank"
                             class="block w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-center text-white font-bold shadow-lg shadow-cyan-500/25 transition-all">
-                            Contratar Growth
+                            Elegir Business
                         </a>
                     </div>
 
@@ -229,17 +224,18 @@ const whatsappLink = (plan) => {
                     <div class="relative p-8 rounded-3xl bg-[#0f101f]/50 border border-white/5 backdrop-blur-sm hover:border-white/10 transition-all hover:bg-[#0f101f]">
                         <h3 class="text-xl font-bold text-gray-300 mb-2">Enterprise</h3>
                         <div class="flex items-baseline gap-1 my-6">
-                            <span class="text-sm text-gray-400">A Medida</span>
+                            <span class="text-4xl font-bold text-white">$199</span>
+                            <span class="text-gray-400">/mes</span>
                         </div>
                         <ul class="space-y-4 mb-8 text-gray-400 text-sm">
-                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Sistema SaaS Completo</li>
-                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Automatización Avanzada (IA)</li>
-                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> App Móvil (iOS/Android)</li>
-                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Infraestructura Dedicada</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Contactos Ilimitados</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Usuarios Ilimitados</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Mensajes Ilimitados</li>
+                             <li class="flex items-center gap-3"><svg class="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> API Dedicada</li>
                         </ul>
                         <a :href="whatsappLink('Enterprise')" target="_blank"
                             class="block w-full py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-center text-white font-bold transition-all">
-                            Cotizar Proyecto
+                            Elegir Enterprise
                         </a>
                     </div>
                 </div>
@@ -253,8 +249,7 @@ const whatsappLink = (plan) => {
                     <!-- Brand -->
                     <div class="col-span-1 lg:col-span-1">
                         <div class="flex items-center gap-3 mb-6">
-                            <img src="/logo-solveit.png" alt="SOLVEIT" class="h-8 w-auto grayscale opacity-80" />
-                            <span class="text-xl font-bold text-gray-200">SOLVEIT</span>
+                            <img src="/logo-solveit.png" alt="SOLVEIT" class="h-8 w-auto opacity-80" />
                         </div>
                         <p class="text-gray-500 text-sm leading-relaxed">
                             Impulsando la transformación digital de Bolivia. Creamos software que funciona.
