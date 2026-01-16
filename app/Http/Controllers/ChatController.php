@@ -135,50 +135,54 @@ class ChatController extends Controller
      */
     public function sendImage(Request $request, Contact $contact, \App\Services\WhatsAppService $whatsapp)
     {
-        $request->validate([
-            'image' => 'required|image|max:5120', // 5MB max
-            'caption' => 'nullable|string|max:1024'
-        ]);
+        try {
+            $request->validate([
+                'image' => 'required|image|max:5120', // 5MB max
+                'caption' => 'nullable|string|max:1024'
+            ]);
 
-        $file = $request->file('image');
-        $caption = $request->input('caption', '');
+            $file = $request->file('image');
+            $caption = $request->input('caption', '');
 
-        // Store locally first
-        $path = $file->store('chat-media', 'public');
-        $localUrl = \Storage::disk('public')->url($path);
+            // Store locally first
+            $path = $file->store('chat-media', 'public');
+            $localUrl = Storage::disk('public')->url($path);
 
-        // Upload to WhatsApp
-        $mediaId = $whatsapp->uploadMedia($file->path(), $file->getMimeType());
+            // Try to upload to WhatsApp (may fail if token invalid)
+            $mediaId = null;
+            $wamId = 'local_' . uniqid();
 
-        if (!$mediaId) {
-            return response()->json(['error' => 'Failed to upload to WhatsApp'], 500);
+            try {
+                $mediaId = $whatsapp->uploadMedia($file->path(), $file->getMimeType());
+
+                if ($mediaId) {
+                    $response = $whatsapp->sendImageMessage($contact->wa_id, $mediaId, $caption);
+                    $wamId = $response['messages'][0]['id'] ?? $wamId;
+                }
+            } catch (\Exception $e) {
+                \Log::warning('WhatsApp image upload failed: ' . $e->getMessage());
+            }
+
+            // Save to DB (even if WhatsApp failed)
+            $message = Message::create([
+                'wam_id' => $wamId,
+                'contact_id' => $contact->id,
+                'type' => 'image',
+                'body' => $localUrl,
+                'status' => $mediaId ? 'sent' : 'pending',
+                'direction' => 'outgoing',
+                'metadata' => json_encode([
+                    'caption' => $caption,
+                    'local_path' => $path,
+                    'media_id' => $mediaId
+                ]),
+            ]);
+
+            return response()->json($message);
+        } catch (\Exception $e) {
+            \Log::error('sendImage error: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        // Send via WhatsApp
-        $response = $whatsapp->sendImageMessage($contact->wa_id, $mediaId, $caption);
-
-        if (isset($response['error'])) {
-            return response()->json(['error' => 'Failed to send image'], 500);
-        }
-
-        $wamId = $response['messages'][0]['id'] ?? 'temp_' . uniqid();
-
-        // Save to DB
-        $message = Message::create([
-            'wam_id' => $wamId,
-            'contact_id' => $contact->id,
-            'type' => 'image',
-            'body' => $localUrl,
-            'status' => 'sent',
-            'direction' => 'outgoing',
-            'metadata' => json_encode([
-                'caption' => $caption,
-                'local_path' => $path,
-                'media_id' => $mediaId
-            ]),
-        ]);
-
-        return response()->json($message);
     }
 
     /**
