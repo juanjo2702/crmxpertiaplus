@@ -282,6 +282,35 @@ const getDocumentUrl = (item) => {
     return `/storage/chat-media/${item.text}`;
 };
 
+const getFileIconBg = (item) => {
+    const ext = getFileExtension(item).toLowerCase();
+    const colors = {
+        'pdf': 'bg-red-500',
+        'doc': 'bg-blue-600',
+        'docx': 'bg-blue-600',
+        'xls': 'bg-green-600',
+        'xlsx': 'bg-green-600',
+        'ppt': 'bg-orange-500',
+        'pptx': 'bg-orange-500',
+        'txt': 'bg-gray-500',
+        'zip': 'bg-yellow-600',
+        'rar': 'bg-yellow-600',
+        'mp3': 'bg-purple-500',
+        'mp4': 'bg-pink-500',
+        'jpg': 'bg-teal-500',
+        'jpeg': 'bg-teal-500',
+        'png': 'bg-teal-500',
+    };
+    return colors[ext] || 'bg-gray-500';
+};
+
+const getFileIconText = (item) => {
+    const ext = getFileExtension(item).toUpperCase();
+    // Shorten long extensions
+    if (ext.length > 4) return ext.substring(0, 4);
+    return ext;
+};
+
 const openDocument = (item) => {
     const url = getDocumentUrl(item);
     window.open(url, '_blank');
@@ -573,20 +602,17 @@ onUnmounted(() => {
                                     <template v-else-if="item.msgType === 'document'">
                                         <div
                                             class="flex items-start gap-3 min-w-[220px] p-2 bg-gray-50 rounded-lg border border-gray-200">
-                                            <!-- PDF Icon -->
-                                            <div
-                                                class="flex-shrink-0 w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
-                                                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path
-                                                        d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM8.5 15c-.828 0-1.5-.672-1.5-1.5S7.672 12 8.5 12s1.5.672 1.5 1.5S9.328 15 8.5 15z" />
-                                                </svg>
+                                            <!-- Dynamic File Icon -->
+                                            <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
+                                                :class="getFileIconBg(item)">
+                                                <span class="text-white text-xs font-bold">{{ getFileIconText(item)
+                                                }}</span>
                                             </div>
                                             <!-- File Info -->
                                             <div class="flex-1 min-w-0">
                                                 <p class="text-sm font-medium text-gray-800 truncate">{{
                                                     getDocumentFileName(item) }}</p>
-                                                <p class="text-xs text-gray-500 mt-0.5">{{ getFileExtension(item)
-                                                }}</p>
+                                                <p class="text-xs text-gray-500 mt-0.5">{{ getFileExtension(item) }}</p>
                                             </div>
                                         </div>
                                         <!-- Action Buttons -->
@@ -595,7 +621,7 @@ onUnmounted(() => {
                                                 class="text-emerald-600 hover:text-emerald-700 font-medium">
                                                 Abrir
                                             </button>
-                                            <a :href="getDocumentUrl(item)" download
+                                            <a :href="getDocumentUrl(item)" :download="getDocumentFileName(item)"
                                                 class="text-emerald-600 hover:text-emerald-700 font-medium">
                                                 Descargar
                                             </a>
