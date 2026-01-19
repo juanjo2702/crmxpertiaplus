@@ -10,12 +10,30 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 
+use App\Models\TenantSede;
+use App\Models\TenantCarrera;
+use App\Models\TenantOferta;
+use App\Models\TenantEvento;
+
 class ChatController extends Controller
 {
     public function index()
     {
+        $tenantId = Auth::user()->tenant_id;
+
+        $sedes = TenantSede::where('tenant_id', $tenantId)->get();
+        $carreras = TenantCarrera::where('tenant_id', $tenantId)->get();
+        $ofertas = TenantOferta::where('tenant_id', $tenantId)->where('activo', true)->get();
+        $eventos = TenantEvento::where('tenant_id', $tenantId)->where('activo', true)->get();
+
         return Inertia::render('Chat/Index', [
-            'initialContacts' => $this->getContactsData()
+            'initialContacts' => $this->getContactsData(),
+            'catalogs' => [
+                'sedes' => $sedes,
+                'carreras' => $carreras,
+                'ofertas' => $ofertas,
+                'eventos' => $eventos
+            ]
         ]);
     }
 
@@ -310,5 +328,64 @@ class ChatController extends Controller
             Log::error('sendDocument error: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+    /**
+     * Get detailed CRM info for a contact
+     */
+    public function contactDetails(Contact $contact)
+    {
+        // Security check
+        if ($contact->tenant_id !== Auth::user()->tenant_id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $contact->load(['carreras', 'sedes', 'ofertas', 'eventos']);
+
+        return response()->json([
+            'id' => $contact->id,
+            'name' => $contact->name,
+            'wa_id' => $contact->wa_id,
+            'email' => $contact->email,
+            'nivel_interes' => $contact->nivel_interes,
+            'estado_crm' => $contact->estado_crm,
+            'notas_crm' => $contact->notas_crm,
+            'carreras' => $contact->carreras->pluck('id'),
+            'sedes' => $contact->sedes->pluck('id'),
+            'ofertas' => $contact->ofertas->pluck('id'),
+            'eventos' => $contact->eventos->pluck('id'),
+        ]);
+    }
+
+    /**
+     * Update CRM info for a contact
+     */
+    public function updateContact(Request $request, Contact $contact)
+    {
+        if ($contact->tenant_id !== Auth::user()->tenant_id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $data = $request->validate([
+            'nivel_interes' => 'nullable|string',
+            'estado_crm' => 'nullable|string',
+            'notas_crm' => 'nullable|string',
+            'sedes' => 'nullable|array',
+            'carreras' => 'nullable|array',
+            'ofertas' => 'nullable|array',
+            'eventos' => 'nullable|array',
+        ]);
+
+        $contact->update([
+            'nivel_interes' => $data['nivel_interes'] ?? null,
+            'estado_crm' => $data['estado_crm'] ?? null,
+            'notas_crm' => $data['notas_crm'] ?? null,
+        ]);
+
+        if (isset($data['sedes'])) $contact->sedes()->sync($data['sedes']);
+        if (isset($data['carreras'])) $contact->carreras()->sync($data['carreras']);
+        if (isset($data['ofertas'])) $contact->ofertas()->sync($data['ofertas']);
+        if (isset($data['eventos'])) $contact->eventos()->sync($data['eventos']);
+
+        return response()->json(['success' => true]);
     }
 }

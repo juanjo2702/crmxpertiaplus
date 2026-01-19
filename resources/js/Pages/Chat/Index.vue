@@ -5,6 +5,7 @@ import axios from 'axios';
 
 const props = defineProps({
     initialContacts: Array,
+    catalogs: { type: Object, default: () => ({}) }
 });
 
 const page = usePage();
@@ -27,6 +28,53 @@ const searchQuery = ref('');
 const imageInput = ref(null);
 const documentInput = ref(null);
 const isDragging = ref(false);
+
+// CRM State
+const showCrmPanel = ref(true);
+const crmLoading = ref(false);
+const crmData = ref({
+    nivel_interes: '',
+    estado_crm: '',
+    notas_crm: '',
+    sedes: [],
+    carreras: [],
+    ofertas: [],
+    eventos: []
+});
+
+const fetchCrmData = async (contactId) => {
+    crmLoading.value = true;
+    try {
+        const response = await axios.get(route('chat.contact.details', contactId));
+        crmData.value = response.data;
+    } catch (error) {
+        console.error('Error fetching CRM data', error);
+    } finally {
+        crmLoading.value = false;
+    }
+};
+
+const updateCrmData = async () => {
+    if (!selectedContact.value) return;
+    try {
+        await axios.put(route('chat.contact.update', selectedContact.value.id), crmData.value);
+        // Optional: Show success feedback
+    } catch (e) {
+        console.error('Failed to update CRM', e);
+        alert('Error al guardar datos CRM');
+    }
+};
+
+// Helper to toggle items in arrays (for multiselect)
+const toggleCrmItem = (arrayName, id) => {
+    const arr = crmData.value[arrayName];
+    const idx = arr.indexOf(id);
+    if (idx > -1) {
+        arr.splice(idx, 1);
+    } else {
+        arr.push(id);
+    }
+};
 
 // New Chat Modal State
 const showNewChatModal = ref(false);
@@ -203,7 +251,8 @@ watch(messages, () => {
 const selectContact = async (contact) => {
     selectedContact.value = contact;
     messages.value = [];
-    await fetchMessages();
+    fetchMessages();
+    fetchCrmData(contact.id);
 
     if (contact.unread > 0) {
         try {
@@ -677,7 +726,7 @@ onUnmounted(() => {
                                         <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                                             :class="getFileIconBg(item)">
                                             <span class="text-white text-xs font-bold">{{ getFileIconText(item)
-                                                }}</span>
+                                            }}</span>
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <p class="text-sm font-medium text-white truncate">{{
@@ -764,6 +813,107 @@ onUnmounted(() => {
                 </div>
                 <h3 class="text-xl font-medium text-white mb-2">Chat WhatsApp</h3>
                 <p class="text-sm">Selecciona un chat para comenzar</p>
+            </div>
+        </div>
+
+        <!-- CRM Panel -->
+        <div v-if="selectedContact && showCrmPanel"
+            class="hidden xl:flex w-80 bg-slate-900 border-l border-white/10 flex-col backdrop-blur-xl shrink-0 transition-all">
+            <div class="p-4 border-b border-white/10 flex justify-between items-center">
+                <h3 class="text-white font-semibold">CRM Contacto</h3>
+                <button @click="updateCrmData"
+                    class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
+                    Guardar
+                </button>
+            </div>
+
+            <div v-if="crmLoading" class="flex-1 flex items-center justify-center text-slate-400">
+                <svg class="animate-spin h-5 w-5 mr-2 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+                Cargando...
+            </div>
+
+            <div v-else class="flex-1 overflow-y-auto p-4 space-y-6">
+                <!-- Info Contacto -->
+                <div class="p-3 bg-slate-800/50 rounded-lg border border-white/5">
+                    <p class="text-xs text-slate-500 uppercase font-bold mb-2">Contacto</p>
+                    <p class="text-white font-medium">{{ selectedContact.name }}</p>
+                    <p class="text-slate-400 text-sm">{{ selectedContact.wa_id }}</p>
+                    <p class="text-slate-400 text-sm">{{ selectedContact.email || 'Sin email' }}</p>
+                </div>
+
+                <!-- Estado y Interés -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Nivel de Interés</label>
+                        <select v-model="crmData.nivel_interes"
+                            class="w-full bg-slate-800 border border-white/10 rounded-lg text-white text-sm px-3 py-2 focus:ring-1 focus:ring-indigo-500 outline-none">
+                            <option value="">-- Seleccionar --</option>
+                            <option value="frio">❄️ Frío</option>
+                            <option value="tibio">🔥 Tibio</option>
+                            <option value="caliente">💥 Caliente</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Estado CRM</label>
+                        <select v-model="crmData.estado_crm"
+                            class="w-full bg-slate-800 border border-white/10 rounded-lg text-white text-sm px-3 py-2 focus:ring-1 focus:ring-indigo-500 outline-none">
+                            <option value="">-- Seleccionar --</option>
+                            <option value="prospecto">Prospecto</option>
+                            <option value="interesado">Interesado</option>
+                            <option value="inscrito">Inscrito</option>
+                            <option value="perdido">Perdido</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Carreras de Interes -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-2">Carreras de Interés</label>
+                    <div class="space-y-2 max-h-40 overflow-y-auto pr-1">
+                        <label v-for="carrera in catalogs.carreras" :key="carrera.id"
+                            class="flex items-start gap-2 p-2 rounded hover:bg-white/5 cursor-pointer text-sm">
+                            <input type="checkbox" :checked="crmData.carreras.includes(carrera.id)"
+                                @change="toggleCrmItem('carreras', carrera.id)"
+                                class="mt-1 rounded bg-slate-700 border-slate-500 text-indigo-600 focus:ring-indigo-500">
+                            <div>
+                                <span class="text-white block">{{ carrera.nombre }}</span>
+                                <span v-if="carrera.duracion" class="text-xs text-slate-500">{{ carrera.duracion
+                                    }}</span>
+                            </div>
+                        </label>
+                        <p v-if="!catalogs.carreras?.length" class="text-xs text-slate-500 italic">No hay carreras
+                            disponibles</p>
+                    </div>
+                </div>
+
+                <!-- Sedes -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-2">Sedes Preferidas</label>
+                    <div class="space-y-2">
+                        <label v-for="sede in catalogs.sedes" :key="sede.id"
+                            class="flex items-center gap-2 p-2 rounded hover:bg-white/5 cursor-pointer text-sm">
+                            <input type="checkbox" :checked="crmData.sedes.includes(sede.id)"
+                                @change="toggleCrmItem('sedes', sede.id)"
+                                class="rounded bg-slate-700 border-slate-500 text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-white">{{ sede.nombre }}</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Notas -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Notas / Observaciones</label>
+                    <textarea v-model="crmData.notas_crm" rows="4"
+                        class="w-full bg-slate-800 border border-white/10 rounded-lg text-white text-sm px-3 py-2 focus:ring-1 focus:ring-indigo-500 outline-none placeholder-slate-600"
+                        placeholder="Escribe notas aquí..."></textarea>
+                </div>
+
+                <div class="h-10"></div> <!-- Spacer -->
             </div>
         </div>
 

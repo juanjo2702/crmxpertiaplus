@@ -1,0 +1,22 @@
+
+> build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m✓[39m 21 modules transformed.
+[31m✗[39m Build failed in 162ms
+[31merror during build:
+[31m[vite:vue] [plugin vite:vue] resources/js/Pages/Tenant/Catalogs/Carreras.vue (105:92): Error parsing JavaScript expression: Unterminated string constant. (1:21)[31m
+file: [36mC:/Users/juanj/OneDrive/Escritorio/UNITEPC CRM/core/resources/js/Pages/Tenant/Catalogs/Carreras.vue:105:92[31m
+SyntaxError: [plugin vite:vue] resources/js/Pages/Tenant/Catalogs/Carreras.vue (105:92): Error parsing JavaScript expression: Unterminated string constant. (1:21)
+    at createCompilerError (C:\Users\juanj\OneDrive\Escritorio\UNITEPC CRM\core\node_modules\@vue\compiler-core\dist\compiler-core.cjs.prod.js:1374:17)
+    at emitError (C:\Users\juanj\OneDrive\Escritorio\UNITEPC CRM\core\node_modules\@vue\compiler-core\dist\compiler-core.cjs.prod.js:2980:5)
+    at createExp (C:\Users\juanj\OneDrive\Escritorio\UNITEPC CRM\core\node_modules\@vue\compiler-core\dist\compiler-core.cjs.prod.js:2973:7)
+    at Object.oninterpolation (C:\Users\juanj\OneDrive\Escritorio\UNITEPC CRM\core\node_modules\@vue\compiler-core\dist\compiler-core.cjs.prod.js:2347:16)
+    at Tokenizer.stateInterpolationClose (C:\Users\juanj\OneDrive\Escritorio\UNITEPC CRM\core\node_modules\@vue\compiler-core\dist\compiler-core.cjs.prod.js:596:18)
+    at Tokenizer.parse (C:\Users\juanj\OneDrive\Escritorio\UNITEPC CRM\core\node_modules\@vue\compiler-core\dist\compiler-core.cjs.prod.js:1097:16)
+    at Object.baseParse (C:\Users\juanj\OneDrive\Escritorio\UNITEPC CRM\core\node_modules\@vue\compiler-core\dist\compiler-core.cjs.prod.js:3012:13)
+    at Object.parse (C:\Users\juanj\OneDrive\Escritorio\UNITEPC CRM\core\node_modules\@vue\compiler-dom\dist\compiler-dom.cjs.prod.js:665:23)
+    at Object.parse$1 [as parse] (C:\Users\juanj\OneDrive\Escritorio\UNITEPC CRM\core\node_modules\@vue\compiler-sfc\dist\compiler-sfc.cjs.js:1824:24)
+    at createDescriptor (file:///C:/Users/juanj/OneDrive/Escritorio/UNITEPC%20CRM/core/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)[39m

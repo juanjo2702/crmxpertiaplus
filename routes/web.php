@@ -100,6 +100,39 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureUserIsTenantAd
     Route::delete('/usuarios/{user}', [\App\Http\Controllers\TenantAdminController::class, 'destroyUser'])->name('users.destroy');
     Route::get('/configuracion', [\App\Http\Controllers\TenantAdminController::class, 'settings'])->name('settings');
     Route::post('/password', [\App\Http\Controllers\TenantAdminController::class, 'updatePassword'])->name('password.update');
+
+    // Catalogs
+    // Sedes
+    Route::get('/sedes', [\App\Http\Controllers\TenantCatalogController::class, 'sedes'])->name('sedes');
+    Route::post('/sedes', [\App\Http\Controllers\TenantCatalogController::class, 'storeSede'])->name('sedes.store');
+    Route::put('/sedes/{sede}', [\App\Http\Controllers\TenantCatalogController::class, 'updateSede'])->name('sedes.update');
+    Route::delete('/sedes/{sede}', [\App\Http\Controllers\TenantCatalogController::class, 'destroySede'])->name('sedes.destroy');
+
+    // Reportes
+    Route::get('/reportes', [\App\Http\Controllers\TenantReportController::class, 'index'])->name('reports');
+
+    // New chat routes for tenant admin
+    Route::post('/chat/send-document/{contact}', [\App\Http\Controllers\ChatController::class, 'sendDocument'])->name('chat.sendDocument');
+    Route::get('/chat/contact/{contact}', [\App\Http\Controllers\ChatController::class, 'contactDetails'])->name('chat.contact.details');
+    Route::put('/chat/contact/{contact}', [\App\Http\Controllers\ChatController::class, 'updateContact'])->name('chat.contact.update');
+
+    // Carreras
+    Route::get('/carreras', [\App\Http\Controllers\TenantCatalogController::class, 'carreras'])->name('carreras');
+    Route::post('/carreras', [\App\Http\Controllers\TenantCatalogController::class, 'storeCarrera'])->name('carreras.store');
+    Route::put('/carreras/{carrera}', [\App\Http\Controllers\TenantCatalogController::class, 'updateCarrera'])->name('carreras.update');
+    Route::delete('/carreras/{carrera}', [\App\Http\Controllers\TenantCatalogController::class, 'destroyCarrera'])->name('carreras.destroy');
+
+    // Ofertas
+    Route::get('/ofertas', [\App\Http\Controllers\TenantCatalogController::class, 'ofertas'])->name('ofertas');
+    Route::post('/ofertas', [\App\Http\Controllers\TenantCatalogController::class, 'storeOferta'])->name('ofertas.store');
+    Route::put('/ofertas/{oferta}', [\App\Http\Controllers\TenantCatalogController::class, 'updateOferta'])->name('ofertas.update');
+    Route::delete('/ofertas/{oferta}', [\App\Http\Controllers\TenantCatalogController::class, 'destroyOferta'])->name('ofertas.destroy');
+
+    // Eventos
+    Route::get('/eventos', [\App\Http\Controllers\TenantCatalogController::class, 'eventos'])->name('eventos');
+    Route::post('/eventos', [\App\Http\Controllers\TenantCatalogController::class, 'storeEvento'])->name('eventos.store');
+    Route::put('/eventos/{evento}', [\App\Http\Controllers\TenantCatalogController::class, 'updateEvento'])->name('eventos.update');
+    Route::delete('/eventos/{evento}', [\App\Http\Controllers\TenantCatalogController::class, 'destroyEvento'])->name('eventos.destroy');
 });
 
 require __DIR__ . '/auth.php';
