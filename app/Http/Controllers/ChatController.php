@@ -394,4 +394,44 @@ class ChatController extends Controller
 
         return response()->json(['success' => true]);
     }
+    /**
+     * Configure WhatsApp service with tenant credentials
+     */
+    private function configureWhatsApp(\App\Services\WhatsAppService $whatsapp)
+    {
+        $user = Auth::user();
+        $tenant = $user->tenant;
+
+        if (!$tenant) {
+            // Fallback for superadmin or testing if needed, or throw error
+            // For now, require tenant
+            throw new \Exception('Usuario no asociado a una empresa.');
+        }
+
+        // Check if credentials exist
+        if (empty($tenant->whatsapp_token) || empty($tenant->whatsapp_phone_id)) {
+            Log::warning("WhatsApp credentials missing for tenant {$tenant->id}");
+            // We don't throw immediately to allow saving to DB even if WA fails,
+            // but the service calls will fail if we don't set them.
+            // Actually, the service methods default to env variables if not set via setCredentials?
+            // No, WhatsAppService constructor loads env.
+            // setCredentials OVERRIDES them.
+            // So if tenant has NO credentials, we should probably NOT call setCredentials
+            // and let it fall back to env (if that's the desired behavior)
+            // OR throw an error if multitenancy is strict.
+
+            // Given this is a CRM for multiple tenants, we should probably enforce tenant credentials
+            // OR return. If we return, it uses defaults from .env (SuperAdmin credentials).
+            // Let's assume strict multi-tenancy for now, or log warning.
+            // But if we throw, the user gets 500.
+            // Let's throw a proper error message if they are missing so the UI can show it (or catch it).
+            throw new \Exception('Credenciales de WhatsApp no configuradas. Por favor configurelas en Configuración > Empresa.');
+        }
+
+        $whatsapp->setCredentials(
+            $tenant->whatsapp_token,
+            $tenant->whatsapp_phone_id,
+            $tenant->whatsapp_business_account_id
+        );
+    }
 }
