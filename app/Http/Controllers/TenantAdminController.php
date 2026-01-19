@@ -63,13 +63,14 @@ class TenantAdminController extends Controller
             'ci' => 'required|string|max:20',
             'email' => 'required|email|unique:users,email',
             'phone' => 'nullable|string|max:50',
+            'role' => 'required|in:tenant_admin,employee',
         ]);
 
         // Generate password
         $generatedPassword = Str::random(10);
 
-        // Get employee role
-        $employeeRole = Role::where('name', 'employee')->first();
+        // Get the role
+        $role = Role::where('name', $validated['role'])->first();
 
         $newUser = User::create([
             'name' => $validated['name'],
@@ -79,7 +80,7 @@ class TenantAdminController extends Controller
             'phone' => $validated['phone'] ?? null,
             'password' => Hash::make($generatedPassword),
             'tenant_id' => $currentUser->tenant_id,
-            'role_id' => $employeeRole?->id,
+            'role_id' => $role?->id,
         ]);
 
         return redirect()->back()->with([
