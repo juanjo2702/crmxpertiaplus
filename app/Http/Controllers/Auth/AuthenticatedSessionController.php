@@ -33,10 +33,15 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Check if user is Super Admin and redirect accordingly
+        // Check user role and redirect accordingly
         $user = Auth::user();
+
         if ($user->isSuperAdmin()) {
             return redirect()->intended(route('admin.dashboard', absolute: false));
+        }
+
+        if ($user->isTenantAdmin()) {
+            return redirect()->intended(route('tenant.dashboard', absolute: false));
         }
 
         return redirect()->intended(route('dashboard', absolute: false));

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Contact;
 use App\Models\Message;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
@@ -25,9 +26,19 @@ class ChatController extends Controller
 
     private function getContactsData()
     {
-        return Contact::with(['messages' => function ($query) {
+        $user = Auth::user();
+        $tenantId = $user?->tenant_id;
+
+        $query = Contact::with(['messages' => function ($query) {
             $query->orderBy('created_at', 'desc')->take(1);
-        }])
+        }]);
+
+        // Filter by tenant if user has one (multi-tenant isolation)
+        if ($tenantId) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        return $query
             ->withCount(['messages as unread_count' => function ($query) {
                 $query->where('direction', 'incoming')
                     ->whereNull('read_at');
@@ -121,10 +132,13 @@ class ChatController extends Controller
         // Clean phone number (remove +, spaces, etc)
         $phone = preg_replace('/[^0-9]/', '', $request->phone);
 
-        // Find or create contact
+        // Find or create contact for this tenant
+        $user = Auth::user();
+        $tenantId = $user?->tenant_id;
+
         $contact = Contact::firstOrCreate(
-            ['wa_id' => $phone],
-            ['name' => $request->input('name', $phone)] // Use phone as default name
+            ['wa_id' => $phone, 'tenant_id' => $tenantId],
+            ['name' => $request->input('name', $phone)]
         );
 
         // If template provided, send it

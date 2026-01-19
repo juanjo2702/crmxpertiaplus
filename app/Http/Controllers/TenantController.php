@@ -17,7 +17,9 @@ class TenantController extends Controller
      */
     public function index()
     {
+        // Exclude the system tenant (SOLVEIT) from the clients list
         $tenants = Tenant::withCount('users')
+            ->where('name', '!=', 'SOLVEIT System')
             ->orderBy('created_at', 'desc')
             ->get();
 

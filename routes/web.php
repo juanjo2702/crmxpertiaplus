@@ -87,4 +87,14 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureUserIsSuperAdm
     Route::resource('tenants', \App\Http\Controllers\TenantController::class);
 });
 
+// Tenant Admin Routes
+Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureUserIsTenantAdmin::class])->prefix('empresa')->name('tenant.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\TenantAdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/usuarios', [\App\Http\Controllers\TenantAdminController::class, 'users'])->name('users');
+    Route::post('/usuarios', [\App\Http\Controllers\TenantAdminController::class, 'storeUser'])->name('users.store');
+    Route::delete('/usuarios/{user}', [\App\Http\Controllers\TenantAdminController::class, 'destroyUser'])->name('users.destroy');
+    Route::get('/configuracion', [\App\Http\Controllers\TenantAdminController::class, 'settings'])->name('settings');
+    Route::post('/password', [\App\Http\Controllers\TenantAdminController::class, 'updatePassword'])->name('password.update');
+});
+
 require __DIR__ . '/auth.php';

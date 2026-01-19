@@ -66,4 +66,10 @@ class User extends Authenticatable
     {
         return $this->role && $this->role->name === 'super_admin';
     }
+
+    // Helper to check if user is Tenant Admin
+    public function isTenantAdmin()
+    {
+        return $this->role && $this->role->name === 'tenant_admin';
+    }
 }
