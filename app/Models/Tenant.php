@@ -9,7 +9,7 @@ class Tenant extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'status', 'domain'];
+    protected $fillable = ['name', 'nit', 'razon_social', 'phone', 'address', 'status', 'domain'];
 
     public function users()
     {
