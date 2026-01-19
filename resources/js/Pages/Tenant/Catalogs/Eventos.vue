@@ -18,6 +18,10 @@ const form = useForm({
     lugar: '',
 });
 
+const getDescription = (item) => {
+    return item.descripcion || 'Sin descripción';
+};
+
 const openCreate = () => {
     editingItem.value = null;
     form.reset();
@@ -99,9 +103,7 @@ const formatDate = (date) => {
                             <td class="px-6 py-4">
                                 <div>
                                     <p class="font-medium text-white">{{ item.nombre }}</p>
-                                    <p class="text-sm text-slate-400 truncate max-w-xs">{{ item.descripcion || 'Sin
-                                        descripción'
-                                        }}</p>
+                                    <p class="text-sm text-slate-400 truncate max-w-xs">{{ getDescription(item) }}</p>
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-slate-300">

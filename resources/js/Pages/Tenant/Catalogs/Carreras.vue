@@ -18,6 +18,10 @@ const form = useForm({
     sedes: [],
 });
 
+const getDescription = (item) => {
+    return item.descripcion || 'Sin descripción';
+};
+
 const openCreate = () => {
     editingItem.value = null;
     form.reset();
@@ -102,9 +106,7 @@ const toggleSede = (sedeId) => {
                             <td class="px-6 py-4">
                                 <div>
                                     <p class="font-medium text-white">{{ item.nombre }}</p>
-                                    <p class="text-sm text-slate-400 truncate max-w-xs">{{ item.descripcion || 'Sin
-                                        descripción'
-                                        }}</p>
+                                    <p class="text-sm text-slate-400 truncate max-w-xs">{{ getDescription(item) }}</p>
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-slate-300">{{ item.duracion || '-' }}</td>
@@ -112,7 +114,7 @@ const toggleSede = (sedeId) => {
                                 <div class="flex flex-wrap gap-1">
                                     <span v-for="sede in item.sedes" :key="sede.id"
                                         class="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs">{{
-                                        sede.nombre
+                                            sede.nombre
                                         }}</span>
                                     <span v-if="!item.sedes?.length" class="text-slate-500 text-sm">Sin sedes</span>
                                 </div>

@@ -27,6 +27,10 @@ const form = useForm({
     permanente: false,
 });
 
+const getDescription = (item) => {
+    return item.descripcion || 'Sin descripción';
+};
+
 const openCreate = () => {
     editingItem.value = null;
     form.reset();
@@ -115,9 +119,7 @@ const getTipoColor = (tipo) => {
                             <td class="px-6 py-4">
                                 <div>
                                     <p class="font-medium text-white">{{ item.nombre }}</p>
-                                    <p class="text-sm text-slate-400 truncate max-w-xs">{{ item.descripcion || 'Sin
-                                        descripción'
-                                        }}</p>
+                                    <p class="text-sm text-slate-400 truncate max-w-xs">{{ getDescription(item) }}</p>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
@@ -182,7 +184,7 @@ const getTipoColor = (tipo) => {
                     class="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
                     <div class="p-6 border-b border-white/10">
                         <h3 class="text-xl font-semibold text-white">{{ editingItem ? 'Editar Oferta' : 'Nueva Oferta'
-                            }}</h3>
+                        }}</h3>
                     </div>
                     <form @submit.prevent="submit" class="p-6 space-y-4">
                         <div>
