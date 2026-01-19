@@ -568,9 +568,11 @@ const togglePassword = () => {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    border-radius: 20px;
     position: relative;
     z-index: 1;
+    /* Remove the white/gray background from the logo */
+    mix-blend-mode: screen;
+    filter: brightness(1.1) contrast(1.1);
 }
 
 .logo-glow {
