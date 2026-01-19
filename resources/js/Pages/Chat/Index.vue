@@ -286,7 +286,7 @@ const fetchMessages = async () => {
             time: formatTime(msg.created_at),
             rawDate: msg.created_at,
             msgType: msg.type,
-            metadata: msg.metadata ? JSON.parse(msg.metadata) : null
+            metadata: typeof msg.metadata === 'string' ? JSON.parse(msg.metadata) : (msg.metadata || null)
         }));
 
         if (newMessages.length !== messages.value.length) {
@@ -827,7 +827,7 @@ onUnmounted(() => {
                                         <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                                             :class="getFileIconBg(item)">
                                             <span class="text-white text-xs font-bold">{{ getFileIconText(item)
-                                            }}</span>
+                                                }}</span>
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <p class="text-sm font-medium text-white truncate">{{
@@ -1045,7 +1045,7 @@ onUnmounted(() => {
                             <div>
                                 <span class="text-white block">{{ carrera.nombre }}</span>
                                 <span v-if="carrera.duracion" class="text-xs text-slate-500">{{ carrera.duracion
-                                }}</span>
+                                    }}</span>
                             </div>
                         </label>
                         <p v-if="!catalogs.carreras?.length" class="text-xs text-slate-500 italic">No hay carreras

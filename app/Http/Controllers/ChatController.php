@@ -377,10 +377,10 @@ class ChatController extends Controller
                 'body' => $localUrl, // We store the URL for playback
                 'status' => $mediaId ? 'sent' : 'pending',
                 'direction' => 'outgoing',
-                'metadata' => json_encode([
+                'metadata' => [
                     'local_path' => $path,
                     'media_id' => $mediaId
-                ]),
+                ],
             ]);
 
             return response()->json($message);
