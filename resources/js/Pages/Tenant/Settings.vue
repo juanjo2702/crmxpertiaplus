@@ -24,6 +24,21 @@ const passwordForm = useForm({
     password_confirmation: '',
 });
 
+const waForm = useForm({
+    whatsapp_token: props.tenant?.whatsapp_token || '',
+    whatsapp_phone_id: props.tenant?.whatsapp_phone_id || '',
+    whatsapp_business_account_id: props.tenant?.whatsapp_business_account_id || '',
+});
+
+const submitWhatsApp = () => {
+    waForm.post(route('tenant.settings.update'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            // Optional: show toast
+        },
+    });
+};
+
 const submitPassword = () => {
     passwordForm.post(route('tenant.password.update'), {
         onSuccess: () => {
@@ -35,6 +50,7 @@ const submitPassword = () => {
 </script>
 
 <template>
+
     <Head title="Configuración" />
 
     <TenantLayout>
@@ -64,14 +80,49 @@ const submitPassword = () => {
                         <p class="text-white font-medium">{{ tenant?.phone || '-' }}</p>
                     </div>
                 </div>
-                <p class="mt-4 text-xs text-slate-500">Para modificar esta información, contacta a soporte.</p>
+            </div>
+
+            <!-- WhatsApp Integration -->
+            <div class="rounded-2xl bg-slate-800/50 border border-white/10 p-6">
+                <h2 class="text-lg font-semibold text-white mb-4">Integración WhatsApp</h2>
+                <p class="text-sm text-slate-400 mb-4">Configura las credenciales de la API de WhatsApp Cloud.</p>
+                <form @submit.prevent="submitWhatsApp" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Token de Acceso
+                            (Permanente)</label>
+                        <input v-model="waForm.whatsapp_token" type="password"
+                            class="w-full rounded-xl bg-slate-700/50 border border-white/10 px-4 py-2 text-white focus:border-indigo-500 focus:ring-indigo-500"
+                            placeholder="EAAG..." />
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">ID de Teléfono</label>
+                            <input v-model="waForm.whatsapp_phone_id" type="text"
+                                class="w-full rounded-xl bg-slate-700/50 border border-white/10 px-4 py-2 text-white focus:border-indigo-500 focus:ring-indigo-500"
+                                placeholder="100..." />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">ID de Cuenta (WABA)</label>
+                            <input v-model="waForm.whatsapp_business_account_id" type="text"
+                                class="w-full rounded-xl bg-slate-700/50 border border-white/10 px-4 py-2 text-white focus:border-indigo-500 focus:ring-indigo-500"
+                                placeholder="100..." />
+                        </div>
+                    </div>
+                    <div class="flex justify-end pt-2">
+                        <button type="submit" :disabled="waForm.processing"
+                            class="px-6 py-2 rounded-xl bg-green-600 text-white font-medium hover:bg-green-500 disabled:opacity-50 transition-all">
+                            {{ waForm.processing ? 'Guardando...' : 'Guardar Configuración' }}
+                        </button>
+                    </div>
+                </form>
             </div>
 
             <!-- My Profile -->
             <div class="rounded-2xl bg-slate-800/50 border border-white/10 p-6">
                 <h2 class="text-lg font-semibold text-white mb-4">Mi Perfil</h2>
                 <div class="flex items-center gap-4 mb-6">
-                    <div class="h-16 w-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                    <div
+                        class="h-16 w-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
                         <span class="text-2xl font-bold text-white">{{ user?.name?.charAt(0) || 'U' }}</span>
                     </div>
                     <div>
@@ -99,10 +150,8 @@ const submitPassword = () => {
                         <p class="font-medium text-white">Contraseña</p>
                         <p class="text-sm text-slate-400">Cambia tu contraseña de acceso</p>
                     </div>
-                    <button
-                        @click="showPasswordModal = true"
-                        class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 transition-colors"
-                    >
+                    <button @click="showPasswordModal = true"
+                        class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 transition-colors">
                         Cambiar
                     </button>
                 </div>
@@ -120,48 +169,31 @@ const submitPassword = () => {
                     <form @submit.prevent="submitPassword" class="p-6 space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-slate-300 mb-2">Contraseña Actual</label>
-                            <input
-                                v-model="passwordForm.current_password"
-                                type="password"
-                                required
-                                class="w-full rounded-xl bg-slate-800/50 border border-white/10 px-4 py-3 text-white focus:border-indigo-500 focus:ring-indigo-500 focus:ring-1"
-                            />
-                            <p v-if="passwordForm.errors.current_password" class="mt-1 text-sm text-red-400">{{ passwordForm.errors.current_password }}</p>
+                            <input v-model="passwordForm.current_password" type="password" required
+                                class="w-full rounded-xl bg-slate-800/50 border border-white/10 px-4 py-3 text-white focus:border-indigo-500 focus:ring-indigo-500 focus:ring-1" />
+                            <p v-if="passwordForm.errors.current_password" class="mt-1 text-sm text-red-400">{{
+                                passwordForm.errors.current_password }}</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-300 mb-2">Nueva Contraseña</label>
-                            <input
-                                v-model="passwordForm.password"
-                                type="password"
-                                required
-                                minlength="8"
-                                class="w-full rounded-xl bg-slate-800/50 border border-white/10 px-4 py-3 text-white focus:border-indigo-500 focus:ring-indigo-500 focus:ring-1"
-                            />
+                            <input v-model="passwordForm.password" type="password" required minlength="8"
+                                class="w-full rounded-xl bg-slate-800/50 border border-white/10 px-4 py-3 text-white focus:border-indigo-500 focus:ring-indigo-500 focus:ring-1" />
                             <p class="mt-1 text-xs text-slate-500">Mínimo 8 caracteres</p>
-                            <p v-if="passwordForm.errors.password" class="mt-1 text-sm text-red-400">{{ passwordForm.errors.password }}</p>
+                            <p v-if="passwordForm.errors.password" class="mt-1 text-sm text-red-400">{{
+                                passwordForm.errors.password }}</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-300 mb-2">Confirmar Contraseña</label>
-                            <input
-                                v-model="passwordForm.password_confirmation"
-                                type="password"
-                                required
-                                class="w-full rounded-xl bg-slate-800/50 border border-white/10 px-4 py-3 text-white focus:border-indigo-500 focus:ring-indigo-500 focus:ring-1"
-                            />
+                            <input v-model="passwordForm.password_confirmation" type="password" required
+                                class="w-full rounded-xl bg-slate-800/50 border border-white/10 px-4 py-3 text-white focus:border-indigo-500 focus:ring-indigo-500 focus:ring-1" />
                         </div>
                         <div class="flex gap-3 pt-4">
-                            <button
-                                type="button"
-                                @click="showPasswordModal = false"
-                                class="flex-1 px-4 py-3 rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition-colors"
-                            >
+                            <button type="button" @click="showPasswordModal = false"
+                                class="flex-1 px-4 py-3 rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition-colors">
                                 Cancelar
                             </button>
-                            <button
-                                type="submit"
-                                :disabled="passwordForm.processing"
-                                class="flex-1 px-4 py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-500 disabled:opacity-50 transition-all"
-                            >
+                            <button type="submit" :disabled="passwordForm.processing"
+                                class="flex-1 px-4 py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-500 disabled:opacity-50 transition-all">
                                 {{ passwordForm.processing ? 'Guardando...' : 'Guardar' }}
                             </button>
                         </div>

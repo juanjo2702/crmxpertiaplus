@@ -20,6 +20,13 @@ class WhatsAppService
         $this->wabaId = env('META_WABA_ID');
     }
 
+    public function setCredentials($token, $phoneId, $wabaId)
+    {
+        if ($token) $this->token = $token;
+        if ($phoneId) $this->phoneId = $phoneId;
+        if ($wabaId) $this->wabaId = $wabaId;
+    }
+
     /**
      * Get all templates (Debug)
      */

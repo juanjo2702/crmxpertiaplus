@@ -72,6 +72,14 @@ Route::post('/chat/{contact}/document', [ChatController::class, 'sendDocument'])
     ->middleware(['auth', 'verified'])
     ->name('chat.sendDocument');
 
+Route::get('/chat/contact/{contact}', [ChatController::class, 'contactDetails'])
+    ->middleware(['auth', 'verified'])
+    ->name('chat.contact.details');
+
+Route::put('/chat/contact/{contact}', [ChatController::class, 'updateContact'])
+    ->middleware(['auth', 'verified'])
+    ->name('chat.contact.update');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -99,6 +107,7 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureUserIsTenantAd
     Route::post('/usuarios', [\App\Http\Controllers\TenantAdminController::class, 'storeUser'])->name('users.store');
     Route::delete('/usuarios/{user}', [\App\Http\Controllers\TenantAdminController::class, 'destroyUser'])->name('users.destroy');
     Route::get('/configuracion', [\App\Http\Controllers\TenantAdminController::class, 'settings'])->name('settings');
+    Route::post('/configuracion', [\App\Http\Controllers\TenantAdminController::class, 'updateSettings'])->name('settings.update');
     Route::post('/password', [\App\Http\Controllers\TenantAdminController::class, 'updatePassword'])->name('password.update');
 
     // Catalogs
@@ -111,10 +120,8 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureUserIsTenantAd
     // Reportes
     Route::get('/reportes', [\App\Http\Controllers\TenantReportController::class, 'index'])->name('reports');
 
-    // New chat routes for tenant admin
+    // Chat docs
     Route::post('/chat/send-document/{contact}', [\App\Http\Controllers\ChatController::class, 'sendDocument'])->name('chat.sendDocument');
-    Route::get('/chat/contact/{contact}', [\App\Http\Controllers\ChatController::class, 'contactDetails'])->name('chat.contact.details');
-    Route::put('/chat/contact/{contact}', [\App\Http\Controllers\ChatController::class, 'updateContact'])->name('chat.contact.update');
 
     // Carreras
     Route::get('/carreras', [\App\Http\Controllers\TenantCatalogController::class, 'carreras'])->name('carreras');

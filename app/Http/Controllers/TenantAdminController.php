@@ -57,11 +57,38 @@ class TenantAdminController extends Controller
         $users = User::with('role')
             ->where('tenant_id', $tenantId)
             ->orderBy('created_at', 'desc')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return Inertia::render('Tenant/Users', [
             'users' => $users,
         ]);
+    }
+
+    public function settings()
+    {
+        $user = Auth::user();
+        $tenant = $user->tenant;
+        return Inertia::render('Tenant/Settings', [
+            'tenant' => $tenant,
+            'user' => $user
+        ]);
+    }
+
+    public function updateSettings(Request $request)
+    {
+        $user = Auth::user();
+        $tenant = $user->tenant;
+
+        $validated = $request->validate([
+            'whatsapp_token' => 'nullable|string',
+            'whatsapp_phone_id' => 'nullable|string',
+            'whatsapp_business_account_id' => 'nullable|string',
+        ]);
+
+        $tenant->update($validated);
+
+        return redirect()->back()->with('success', 'Configuración actualizada correctamente');
     }
 
     /**
@@ -129,16 +156,7 @@ class TenantAdminController extends Controller
     /**
      * Display the settings page.
      */
-    public function settings()
-    {
-        $user = Auth::user();
-        $tenant = $user->tenant;
 
-        return Inertia::render('Tenant/Settings', [
-            'tenant' => $tenant,
-            'user' => $user,
-        ]);
-    }
 
     /**
      * Update password.

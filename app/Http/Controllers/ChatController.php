@@ -162,6 +162,7 @@ class ChatController extends Controller
         // If template provided, send it
         if ($request->filled('template')) {
             try {
+                $this->configureWhatsApp($whatsapp);
                 $whatsapp->sendTemplateMessage($contact->wa_id, $request->template, 'es');
 
                 // Log system message
@@ -196,6 +197,9 @@ class ChatController extends Controller
         ]);
 
         $text = $request->input('message');
+
+        // Configure WhatsApp with Tenant credentials
+        $this->configureWhatsApp($whatsapp);
 
         // 1. Send via WhatsApp API
         $response = $whatsapp->sendTextMessage($contact->wa_id, $text);
@@ -243,6 +247,7 @@ class ChatController extends Controller
             $wamId = 'local_' . uniqid();
 
             try {
+                $this->configureWhatsApp($whatsapp);
                 $mediaId = $whatsapp->uploadMedia($file->getRealPath(), $file->getClientMimeType());
 
                 if ($mediaId) {
@@ -298,6 +303,7 @@ class ChatController extends Controller
             $wamId = 'local_' . uniqid();
 
             try {
+                $this->configureWhatsApp($whatsapp);
                 $mediaId = $whatsapp->uploadMedia($file->getRealPath(), $file->getClientMimeType());
 
                 if ($mediaId) {

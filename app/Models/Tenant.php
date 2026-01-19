@@ -9,7 +9,7 @@ class Tenant extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'nit', 'razon_social', 'phone', 'address', 'status', 'domain'];
+    protected $fillable = ['name', 'nit', 'razon_social', 'phone', 'address', 'status', 'domain', 'whatsapp_token', 'whatsapp_phone_id', 'whatsapp_business_account_id'];
 
     public function users()
     {
