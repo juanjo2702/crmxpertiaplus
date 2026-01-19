@@ -205,7 +205,8 @@ class ChatController extends Controller
         $response = $whatsapp->sendTextMessage($contact->wa_id, $text);
 
         if (isset($response['error'])) {
-            return response()->json(['error' => 'Failed to send message via Meta'], 500);
+            Log::error('WhatsApp Send Error', ['response' => $response]);
+            return response()->json(['error' => 'Failed to send message via Meta', 'details' => $response], 500);
         }
 
         $wamId = $response['messages'][0]['id'] ?? 'temp_' . uniqid();
@@ -409,29 +410,15 @@ class ChatController extends Controller
         }
 
         // Check if credentials exist
-        if (empty($tenant->whatsapp_token) || empty($tenant->whatsapp_phone_id)) {
-            Log::warning("WhatsApp credentials missing for tenant {$tenant->id}");
-            // We don't throw immediately to allow saving to DB even if WA fails,
-            // but the service calls will fail if we don't set them.
-            // Actually, the service methods default to env variables if not set via setCredentials?
-            // No, WhatsAppService constructor loads env.
-            // setCredentials OVERRIDES them.
-            // So if tenant has NO credentials, we should probably NOT call setCredentials
-            // and let it fall back to env (if that's the desired behavior)
-            // OR throw an error if multitenancy is strict.
-
-            // Given this is a CRM for multiple tenants, we should probably enforce tenant credentials
-            // OR return. If we return, it uses defaults from .env (SuperAdmin credentials).
-            // Let's assume strict multi-tenancy for now, or log warning.
-            // But if we throw, the user gets 500.
-            // Let's throw a proper error message if they are missing so the UI can show it (or catch it).
-            throw new \Exception('Credenciales de WhatsApp no configuradas. Por favor configurelas en Configuración > Empresa.');
+        if (!empty($tenant->whatsapp_token) && !empty($tenant->whatsapp_phone_id)) {
+            $whatsapp->setCredentials(
+                $tenant->whatsapp_token,
+                $tenant->whatsapp_phone_id,
+                $tenant->whatsapp_business_account_id
+            );
+        } else {
+            // Fallback to .env (Default behavior of Service)
+            Log::warning("Tenant {$tenant->id} has no WhatsApp credentials configured. Using system defaults from .env");
         }
-
-        $whatsapp->setCredentials(
-            $tenant->whatsapp_token,
-            $tenant->whatsapp_phone_id,
-            $tenant->whatsapp_business_account_id
-        );
     }
 }
