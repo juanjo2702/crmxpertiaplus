@@ -471,10 +471,13 @@ const startRecording = async () => {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
         let options = {};
-        if (MediaRecorder.isTypeSupported('audio/mp4')) {
-            options = { mimeType: 'audio/mp4' };
-        } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        // Prefer WebM/Opus (standard for Web, compatible with WhatsApp if sent as OGG)
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
             options = { mimeType: 'audio/webm;codecs=opus' };
+        } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+            options = { mimeType: 'audio/ogg;codecs=opus' };
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+            options = { mimeType: 'audio/mp4' };
         } else {
             console.warn('Using default MediaRecorder mimeType');
         }
@@ -852,7 +855,7 @@ onUnmounted(() => {
                                         <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                                             :class="getFileIconBg(item)">
                                             <span class="text-white text-xs font-bold">{{ getFileIconText(item)
-                                                }}</span>
+                                            }}</span>
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <p class="text-sm font-medium text-white truncate">{{
@@ -1070,7 +1073,7 @@ onUnmounted(() => {
                             <div>
                                 <span class="text-white block">{{ carrera.nombre }}</span>
                                 <span v-if="carrera.duracion" class="text-xs text-slate-500">{{ carrera.duracion
-                                    }}</span>
+                                }}</span>
                             </div>
                         </label>
                         <p v-if="!catalogs.carreras?.length" class="text-xs text-slate-500 italic">No hay carreras
