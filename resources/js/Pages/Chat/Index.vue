@@ -286,7 +286,16 @@ const fetchMessages = async () => {
             time: formatTime(msg.created_at),
             rawDate: msg.created_at,
             msgType: msg.type,
-            metadata: typeof msg.metadata === 'string' ? JSON.parse(msg.metadata) : (msg.metadata || null)
+            metadata: (() => {
+                if (!msg.metadata) return null;
+                if (typeof msg.metadata === 'object') return msg.metadata;
+                try {
+                    return JSON.parse(msg.metadata);
+                } catch (e) {
+                    console.error('Error parsing metadata', e, msg.metadata);
+                    return null;
+                }
+            })()
         }));
 
         if (newMessages.length !== messages.value.length) {
@@ -460,7 +469,17 @@ const sendSingleDocument = async (file) => {
 const startRecording = async () => {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder.value = new MediaRecorder(stream);
+
+        let options = {};
+        if (MediaRecorder.isTypeSupported('audio/mp4')) {
+            options = { mimeType: 'audio/mp4' };
+        } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+            options = { mimeType: 'audio/webm;codecs=opus' };
+        } else {
+            console.warn('Using default MediaRecorder mimeType');
+        }
+
+        mediaRecorder.value = new MediaRecorder(stream, options);
         audioChunks.value = [];
 
         mediaRecorder.value.ondataavailable = (event) => {
@@ -472,7 +491,7 @@ const startRecording = async () => {
             stream.getTracks().forEach(track => track.stop());
         };
 
-        mediaRecorder.value.start();
+        mediaRecorder.value.start(200);
         isRecording.value = true;
         recordingDuration.value = 0;
 
@@ -490,8 +509,14 @@ const stopRecording = () => {
     if (!mediaRecorder.value) return;
 
     mediaRecorder.value.onstop = async () => {
-        const audioBlob = new Blob(audioChunks.value, { type: 'audio/webm' }); // Chrome/Firefox use webm/ogg
-        const audioFile = new File([audioBlob], 'voice_note.webm', { type: 'audio/webm' });
+        const mimeType = mediaRecorder.value.mimeType;
+
+        const finalExt = mimeType.includes('mp4') ? 'mp4' : 'ogg';
+        const type = mimeType.includes('mp4') ? 'audio/mp4' : 'audio/ogg';
+
+        const audioBlob = new Blob(audioChunks.value, { type: mimeType });
+        // WhatsApp is picky. We use .mp4 or .ogg extension.
+        const audioFile = new File([audioBlob], `voice_note.${finalExt}`, { type: type });
 
         await sendAudio(audioFile);
 
