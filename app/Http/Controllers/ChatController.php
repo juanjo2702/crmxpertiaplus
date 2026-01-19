@@ -353,17 +353,36 @@ class ChatController extends Controller
             $path = $file->store('chat-media', 'public');
             $localUrl = Storage::disk('public')->url($path);
 
+            Log::info('Attempting to send audio', [
+                'original_name' => $file->getClientOriginalName(),
+                'mime_client' => $file->getClientMimeType(),
+                'mime_real' => $file->getMimeType(),
+                'size' => $file->getSize(),
+                'path' => $path
+            ]);
+
             // Try to upload to WhatsApp
             $mediaId = null;
             $wamId = 'local_' . uniqid();
 
             try {
                 $this->configureWhatsApp($whatsapp);
+
                 $mediaId = $whatsapp->uploadMedia($file->getRealPath(), $file->getClientMimeType());
+
+                Log::info('WhatsApp Upload Result', ['media_id' => $mediaId]);
 
                 if ($mediaId) {
                     $response = $whatsapp->sendAudioMessage($contact->wa_id, $mediaId);
+                    Log::info('WhatsApp Send Response', ['response' => $response]);
+
+                    if (isset($response['error'])) {
+                        Log::error('WhatsApp Send API Error', ['error' => $response['error']]);
+                    }
+
                     $wamId = $response['messages'][0]['id'] ?? $wamId;
+                } else {
+                    Log::warning('WhatsApp Upload returned null media_id');
                 }
             } catch (\Exception $e) {
                 Log::warning('WhatsApp audio upload failed: ' . $e->getMessage());
