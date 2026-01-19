@@ -368,7 +368,11 @@ class ChatController extends Controller
             try {
                 $this->configureWhatsApp($whatsapp);
 
-                $mediaId = $whatsapp->uploadMedia($file->getRealPath(), $file->getClientMimeType());
+                // Force audio/ogg MIME type for WhatsApp compatibility
+                // Browser records WebM/Opus which WhatsApp doesn't accept, but OGG/Opus it does
+                $mimeForWhatsApp = 'audio/ogg';
+
+                $mediaId = $whatsapp->uploadMedia($file->getRealPath(), $mimeForWhatsApp);
 
                 Log::info('WhatsApp Upload Result', ['media_id' => $mediaId]);
 
