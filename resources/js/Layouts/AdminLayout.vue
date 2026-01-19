@@ -110,7 +110,7 @@ const logout = () => {
                             class="absolute bottom-full left-0 right-0 mb-2 rounded-lg bg-slate-800 border border-white/10 shadow-xl overflow-hidden"
                         >
                             <Link
-                                :href="route('profile.edit')"
+                                :href="route('admin.profile')"
                                 class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
                             >
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -83,6 +83,11 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureUserIsSuperAdmin::class])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\SuperAdminController::class, 'dashboard'])->name('dashboard');
 
+    // Profile
+    Route::get('/profile', [\App\Http\Controllers\SuperAdminController::class, 'profile'])->name('profile');
+    Route::patch('/profile', [\App\Http\Controllers\SuperAdminController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/password', [\App\Http\Controllers\SuperAdminController::class, 'updatePassword'])->name('password.update');
+
     // Tenants CRUD
     Route::resource('tenants', \App\Http\Controllers\TenantController::class);
 });
