@@ -82,7 +82,9 @@ Route::middleware('auth')->group(function () {
 // Super Admin Routes
 Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureUserIsSuperAdmin::class])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\SuperAdminController::class, 'dashboard'])->name('dashboard');
-    // Future routes for tenants CRUD
+
+    // Tenants CRUD
+    Route::resource('tenants', \App\Http\Controllers\TenantController::class);
 });
 
 require __DIR__ . '/auth.php';
