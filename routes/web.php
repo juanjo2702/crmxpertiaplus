@@ -72,6 +72,10 @@ Route::post('/chat/{contact}/document', [ChatController::class, 'sendDocument'])
     ->middleware(['auth', 'verified'])
     ->name('chat.sendDocument');
 
+Route::post('/chat/{contact}/audio', [ChatController::class, 'sendAudio'])
+    ->middleware(['auth', 'verified'])
+    ->name('chat.sendAudio');
+
 Route::get('/chat/contact/{contact}', [ChatController::class, 'contactDetails'])
     ->middleware(['auth', 'verified'])
     ->name('chat.contact.details');

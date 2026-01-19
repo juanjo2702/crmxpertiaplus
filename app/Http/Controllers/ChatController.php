@@ -336,6 +336,59 @@ class ChatController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Send an audio message
+     */
+    public function sendAudio(Request $request, Contact $contact, \App\Services\WhatsAppService $whatsapp)
+    {
+        try {
+            $request->validate([
+                'audio' => 'required|file|max:16384', // 16MB max
+            ]);
+
+            $file = $request->file('audio');
+
+            // Store locally
+            $path = $file->store('chat-media', 'public');
+            $localUrl = Storage::disk('public')->url($path);
+
+            // Try to upload to WhatsApp
+            $mediaId = null;
+            $wamId = 'local_' . uniqid();
+
+            try {
+                $this->configureWhatsApp($whatsapp);
+                $mediaId = $whatsapp->uploadMedia($file->getRealPath(), $file->getClientMimeType());
+
+                if ($mediaId) {
+                    $response = $whatsapp->sendAudioMessage($contact->wa_id, $mediaId);
+                    $wamId = $response['messages'][0]['id'] ?? $wamId;
+                }
+            } catch (\Exception $e) {
+                Log::warning('WhatsApp audio upload failed: ' . $e->getMessage());
+            }
+
+            // Save to DB
+            $message = Message::create([
+                'wam_id' => $wamId,
+                'contact_id' => $contact->id,
+                'type' => 'audio',
+                'body' => $localUrl, // We store the URL for playback
+                'status' => $mediaId ? 'sent' : 'pending',
+                'direction' => 'outgoing',
+                'metadata' => json_encode([
+                    'local_path' => $path,
+                    'media_id' => $mediaId
+                ]),
+            ]);
+
+            return response()->json($message);
+        } catch (\Exception $e) {
+            Log::error('sendAudio error: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
     /**
      * Get detailed CRM info for a contact
      */

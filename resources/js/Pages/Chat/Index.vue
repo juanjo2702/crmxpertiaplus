@@ -151,6 +151,13 @@ const previewFiles = ref([]);
 const previewCaption = ref('');
 const currentPreviewIndex = ref(0);
 
+// Audio Recording State
+const isRecording = ref(false);
+const recordingDuration = ref(0);
+const mediaRecorder = ref(null);
+const audioChunks = ref([]);
+const recordingTimer = ref(null);
+
 let pollingInterval = null;
 
 // Day names in Spanish
@@ -450,6 +457,100 @@ const sendSingleDocument = async (file) => {
     }
 };
 
+const startRecording = async () => {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder.value = new MediaRecorder(stream);
+        audioChunks.value = [];
+
+        mediaRecorder.value.ondataavailable = (event) => {
+            audioChunks.value.push(event.data);
+        };
+
+        mediaRecorder.value.onstop = () => {
+            // Stop all tracks
+            stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.value.start();
+        isRecording.value = true;
+        recordingDuration.value = 0;
+
+        recordingTimer.value = setInterval(() => {
+            recordingDuration.value++;
+        }, 1000);
+
+    } catch (error) {
+        console.error('Error accessing microphone', error);
+        alert('No se pudo acceder al micrófono');
+    }
+};
+
+const stopRecording = () => {
+    if (!mediaRecorder.value) return;
+
+    mediaRecorder.value.onstop = async () => {
+        const audioBlob = new Blob(audioChunks.value, { type: 'audio/webm' }); // Chrome/Firefox use webm/ogg
+        const audioFile = new File([audioBlob], 'voice_note.webm', { type: 'audio/webm' });
+
+        await sendAudio(audioFile);
+
+        isRecording.value = false;
+        clearInterval(recordingTimer.value);
+        recordingDuration.value = 0;
+        audioChunks.value = [];
+    };
+
+    mediaRecorder.value.stop();
+};
+
+const cancelRecording = () => {
+    if (mediaRecorder.value && isRecording.value) {
+        mediaRecorder.value.stop(); // This triggers onstop, but we set flag or logic to ignore
+        // Actually, better to just clear intervals and state
+        isRecording.value = false;
+        clearInterval(recordingTimer.value);
+        recordingDuration.value = 0;
+        audioChunks.value = [];
+        // Important: Stop the tracks so the red recording dot in browser tab goes away
+        if (mediaRecorder.value.stream) {
+            mediaRecorder.value.stream.getTracks().forEach(track => track.stop());
+        }
+    }
+};
+
+const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+const sendAudio = async (file) => {
+    const formData = new FormData();
+    formData.append('audio', file);
+
+    const tempId = Date.now() + Math.random();
+    const previewUrl = URL.createObjectURL(file);
+
+    messages.value.push({
+        id: tempId,
+        text: previewUrl, // We format this as a blob URL for local playback
+        sender: 'me',
+        time: new Date().toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' }),
+        rawDate: new Date().toISOString(),
+        msgType: 'audio'
+    });
+
+    try {
+        await axios.post(route('chat.sendAudio', selectedContact.value.id), formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    } catch (error) {
+        console.error('Failed to send audio', error);
+        alert('Error al enviar audio');
+    }
+};
+
 const handleImageSelect = (event) => {
     const files = Array.from(event.target.files);
     if (!files.length || !selectedContact.value) return;
@@ -742,6 +843,24 @@ onUnmounted(() => {
                                     </div>
                                 </template>
 
+                                <!-- Audio Message -->
+                                <template v-else-if="item.msgType === 'audio'">
+                                    <div class="flex items-center gap-3 min-w-[200px] p-2">
+                                        <audio controls class="w-full max-w-[240px] h-8" controllerslist="nodownload">
+                                            <source
+                                                :src="item.text.startsWith('http') || item.text.startsWith('blob:') ? item.text : `/storage/${item.text.replace('public/', '')}`"
+                                                type="audio/mpeg">
+                                            <source
+                                                :src="item.text.startsWith('http') || item.text.startsWith('blob:') ? item.text : `/storage/${item.text.replace('public/', '')}`"
+                                                type="audio/ogg">
+                                            <source
+                                                :src="item.text.startsWith('http') || item.text.startsWith('blob:') ? item.text : `/storage/${item.text.replace('public/', '')}`"
+                                                type="audio/webm">
+                                            Tu navegador no soporta audio.
+                                        </audio>
+                                    </div>
+                                </template>
+
                                 <!-- Text Message -->
                                 <p v-else class="text-sm text-white break-words">{{ item.text }}</p>
                                 <div class="flex items-center justify-end gap-1 mt-1">
@@ -791,15 +910,58 @@ onUnmounted(() => {
                                 d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                         </svg>
                     </button>
-                    <input v-model="newMessage" @keyup.enter="sendMessage" type="text" placeholder="Escribe un mensaje"
+                    <input v-if="!isRecording" v-model="newMessage" @keyup.enter="sendMessage" type="text"
+                        placeholder="Escribe un mensaje"
                         class="flex-1 px-5 py-3 rounded-xl bg-slate-700/50 border border-white/10 text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button @click="sendMessage" :disabled="isSending || !newMessage.trim()"
+
+                    <!-- Recording UI -->
+                    <div v-else
+                        class="flex-1 px-5 py-3 rounded-xl bg-slate-700/50 border border-white/10 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="relative flex h-3 w-3">
+                                <span
+                                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                            </span>
+                            <span class="text-white font-mono text-sm">{{ formatDuration(recordingDuration) }}</span>
+                        </div>
+                        <span class="text-slate-400 text-xs">Grabando audio...</span>
+                    </div>
+
+                    <!-- Send / Mic Buttons -->
+                    <button v-if="newMessage.trim()" @click="sendMessage" :disabled="isSending"
                         class="p-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                         </svg>
                     </button>
+
+                    <!-- Mic Button (Show when empty input) -->
+                    <div v-else class="flex gap-2">
+                        <button v-if="isRecording" @click="cancelRecording"
+                            class="p-3 bg-slate-600 hover:bg-slate-500 text-white rounded-xl transition-colors shadow-lg"
+                            title="Cancelar">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+
+                        <button @click="isRecording ? stopRecording() : startRecording()"
+                            class="p-3 text-white rounded-xl transition-colors shadow-lg"
+                            :class="isRecording ? 'bg-green-500 hover:bg-green-600' : 'bg-slate-700 hover:bg-slate-600'">
+                            <svg v-if="!isRecording" class="w-5 h-5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                            </svg>
+                            <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -883,7 +1045,7 @@ onUnmounted(() => {
                             <div>
                                 <span class="text-white block">{{ carrera.nombre }}</span>
                                 <span v-if="carrera.duracion" class="text-xs text-slate-500">{{ carrera.duracion
-                                    }}</span>
+                                }}</span>
                             </div>
                         </label>
                         <p v-if="!catalogs.carreras?.length" class="text-xs text-slate-500 italic">No hay carreras
