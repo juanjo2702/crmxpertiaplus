@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Contact;
+use App\Models\Message;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 
@@ -19,11 +21,23 @@ class TenantAdminController extends Controller
     {
         $user = Auth::user();
         $tenant = $user->tenant;
+        $tenantId = $tenant->id;
+
+        // Get real counts
+        $totalContacts = Contact::where('tenant_id', $tenantId)->count();
+
+        // Get contact IDs for this tenant
+        $contactIds = Contact::where('tenant_id', $tenantId)->pluck('id');
+
+        // Count outgoing messages (sent)
+        $totalMessagesSent = Message::whereIn('contact_id', $contactIds)
+            ->where('direction', 'outgoing')
+            ->count();
 
         $stats = [
-            'total_users' => User::where('tenant_id', $tenant->id)->count(),
-            'total_contacts' => 0, // TODO: Count contacts for this tenant
-            'total_messages' => 0, // TODO: Count messages for this tenant
+            'total_users' => User::where('tenant_id', $tenantId)->count(),
+            'total_contacts' => $totalContacts,
+            'total_messages' => $totalMessagesSent,
             'tenant' => $tenant,
         ];
 
