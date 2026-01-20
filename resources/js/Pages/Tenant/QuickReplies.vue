@@ -2,6 +2,8 @@
 import { ref, computed } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import TenantLayout from '@/Layouts/TenantLayout.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+import ToastNotification from '@/Components/ToastNotification.vue';
 
 defineOptions({ layout: TenantLayout });
 
@@ -23,6 +25,31 @@ const categoryForm = ref({ name: '', icon: '' });
 const replyForm = ref({ title: '', body: '', image: null, remove_image: false });
 const imagePreview = ref(null);
 
+// Confirm Modal State
+const showConfirmModal = ref(false);
+const confirmModalConfig = ref({ title: '', message: '', type: 'warning', onConfirm: null });
+
+// Toast Notification State
+const showToast = ref(false);
+const toastConfig = ref({ message: '', type: 'success' });
+
+const showNotification = (message, type = 'success') => {
+    toastConfig.value = { message, type };
+    showToast.value = true;
+};
+
+const openConfirm = (title, message, type, onConfirm) => {
+    confirmModalConfig.value = { title, message, type, onConfirm };
+    showConfirmModal.value = true;
+};
+
+const handleConfirm = () => {
+    if (confirmModalConfig.value.onConfirm) {
+        confirmModalConfig.value.onConfirm();
+    }
+    showConfirmModal.value = false;
+};
+
 // Common emoji icons for categories
 const emojiIcons = ['👋', '🎉', '📢', '💼', '📚', '❓', '✅', '❌', '💰', '📍', '📞', '📧', '⏰', '🎓', '🏢'];
 
@@ -38,35 +65,45 @@ const saveCategory = async () => {
     try {
         if (editingCategory.value) {
             await axios.put(route('quick-replies.categories.update', editingCategory.value.id), categoryForm.value);
+            showNotification('Categoría actualizada correctamente');
         } else {
             await axios.post(route('quick-replies.categories.store'), categoryForm.value);
+            showNotification('Categoría creada correctamente');
         }
         router.reload();
         showCategoryModal.value = false;
     } catch (error) {
         console.error('Error saving category:', error);
-        alert('Error al guardar la categoría');
+        showNotification('Error al guardar la categoría', 'error');
     }
 };
 
-const deleteCategory = async (category) => {
-    if (!confirm(`¿Eliminar categoría "${category.name}" y todas sus respuestas?`)) return;
-
-    try {
-        await axios.delete(route('quick-replies.categories.destroy', category.id));
-        router.reload();
-    } catch (error) {
-        console.error('Error deleting category:', error);
-        alert('Error al eliminar la categoría');
-    }
+const deleteCategory = (category) => {
+    openConfirm(
+        'Eliminar Categoría',
+        `¿Eliminar categoría "${category.name}" y todas sus respuestas?`,
+        'danger',
+        async () => {
+            try {
+                await axios.delete(route('quick-replies.categories.destroy', category.id));
+                showNotification('Categoría eliminada correctamente');
+                router.reload();
+            } catch (error) {
+                console.error('Error deleting category:', error);
+                showNotification('Error al eliminar la categoría', 'error');
+            }
+        }
+    );
 };
 
 const toggleCategory = async (category) => {
     try {
         await axios.post(route('quick-replies.categories.toggle', category.id));
         category.is_active = !category.is_active;
+        showNotification(category.is_active ? 'Categoría habilitada' : 'Categoría deshabilitada');
     } catch (error) {
         console.error('Error toggling category:', error);
+        showNotification('Error al cambiar estado', 'error');
     }
 };
 
@@ -109,36 +146,46 @@ const saveReply = async () => {
 
         if (editingReply.value) {
             await axios.post(route('quick-replies.update', editingReply.value.id), formData);
+            showNotification('Respuesta actualizada correctamente');
         } else {
             formData.append('category_id', selectedCategoryId.value);
             await axios.post(route('quick-replies.store'), formData);
+            showNotification('Respuesta creada correctamente');
         }
         router.reload();
         showReplyModal.value = false;
     } catch (error) {
         console.error('Error saving reply:', error);
-        alert('Error al guardar la respuesta');
+        showNotification('Error al guardar la respuesta', 'error');
     }
 };
 
-const deleteReply = async (reply) => {
-    if (!confirm(`¿Eliminar respuesta "${reply.title}"?`)) return;
-
-    try {
-        await axios.delete(route('quick-replies.destroy', reply.id));
-        router.reload();
-    } catch (error) {
-        console.error('Error deleting reply:', error);
-        alert('Error al eliminar la respuesta');
-    }
+const deleteReply = (reply) => {
+    openConfirm(
+        'Eliminar Respuesta',
+        `¿Eliminar respuesta "${reply.title}"?`,
+        'danger',
+        async () => {
+            try {
+                await axios.delete(route('quick-replies.destroy', reply.id));
+                showNotification('Respuesta eliminada correctamente');
+                router.reload();
+            } catch (error) {
+                console.error('Error deleting reply:', error);
+                showNotification('Error al eliminar la respuesta', 'error');
+            }
+        }
+    );
 };
 
 const toggleReply = async (reply) => {
     try {
         await axios.post(route('quick-replies.toggle', reply.id));
         reply.is_active = !reply.is_active;
+        showNotification(reply.is_active ? 'Respuesta habilitada' : 'Respuesta deshabilitada');
     } catch (error) {
         console.error('Error toggling reply:', error);
+        showNotification('Error al cambiar estado', 'error');
     }
 };
 </script>
@@ -379,5 +426,13 @@ const toggleReply = async (reply) => {
                 </div>
             </div>
         </div>
+
+        <!-- Confirm Modal -->
+        <ConfirmModal :show="showConfirmModal" :title="confirmModalConfig.title" :message="confirmModalConfig.message"
+            :type="confirmModalConfig.type" @confirm="handleConfirm" @cancel="showConfirmModal = false" />
+
+        <!-- Toast Notification -->
+        <ToastNotification :show="showToast" :message="toastConfig.message" :type="toastConfig.type"
+            @close="showToast = false" />
     </div>
 </template>
