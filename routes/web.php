@@ -109,6 +109,55 @@ Route::get('/chat/filter', [ChatController::class, 'filterContacts'])
     ->middleware(['auth', 'verified'])
     ->name('chat.filter');
 
+// Quick Replies Routes
+Route::get('/quick-replies', [\App\Http\Controllers\QuickReplyController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('quick-replies.index');
+
+Route::get('/quick-replies/manage', [\App\Http\Controllers\QuickReplyController::class, 'manage'])
+    ->middleware(['auth', 'verified'])
+    ->name('quick-replies.manage');
+
+Route::post('/quick-replies/categories', [\App\Http\Controllers\QuickReplyController::class, 'storeCategory'])
+    ->middleware(['auth', 'verified'])
+    ->name('quick-replies.categories.store');
+
+Route::put('/quick-replies/categories/{category}', [\App\Http\Controllers\QuickReplyController::class, 'updateCategory'])
+    ->middleware(['auth', 'verified'])
+    ->name('quick-replies.categories.update');
+
+Route::delete('/quick-replies/categories/{category}', [\App\Http\Controllers\QuickReplyController::class, 'destroyCategory'])
+    ->middleware(['auth', 'verified'])
+    ->name('quick-replies.categories.destroy');
+
+Route::post('/quick-replies/categories/{category}/toggle', [\App\Http\Controllers\QuickReplyController::class, 'toggleCategory'])
+    ->middleware(['auth', 'verified'])
+    ->name('quick-replies.categories.toggle');
+
+Route::post('/quick-replies/categories/reorder', [\App\Http\Controllers\QuickReplyController::class, 'reorderCategories'])
+    ->middleware(['auth', 'verified'])
+    ->name('quick-replies.categories.reorder');
+
+Route::post('/quick-replies', [\App\Http\Controllers\QuickReplyController::class, 'store'])
+    ->middleware(['auth', 'verified'])
+    ->name('quick-replies.store');
+
+Route::post('/quick-replies/{quickReply}', [\App\Http\Controllers\QuickReplyController::class, 'update'])
+    ->middleware(['auth', 'verified'])
+    ->name('quick-replies.update');
+
+Route::delete('/quick-replies/{quickReply}', [\App\Http\Controllers\QuickReplyController::class, 'destroy'])
+    ->middleware(['auth', 'verified'])
+    ->name('quick-replies.destroy');
+
+Route::post('/quick-replies/{quickReply}/toggle', [\App\Http\Controllers\QuickReplyController::class, 'toggle'])
+    ->middleware(['auth', 'verified'])
+    ->name('quick-replies.toggle');
+
+Route::post('/quick-replies/reorder', [\App\Http\Controllers\QuickReplyController::class, 'reorderReplies'])
+    ->middleware(['auth', 'verified'])
+    ->name('quick-replies.reorder');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

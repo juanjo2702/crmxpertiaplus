@@ -40,6 +40,11 @@ const showTransferHistory = ref(false);
 const transferHistory = ref([]);
 const isAdmin = computed(() => user.value?.role?.name === 'tenant_admin');
 
+// Quick Replies State
+const showQuickReplies = ref(false);
+const quickReplyCategories = ref([]);
+const selectedQuickCategory = ref(null);
+
 // CRM State
 const showCrmPanel = ref(true);
 const crmLoading = ref(false);
@@ -522,6 +527,42 @@ const handlePaste = (event) => {
     }, 0);
 };
 
+// Quick Replies Functions
+const fetchQuickReplies = async () => {
+    try {
+        const response = await axios.get(route('quick-replies.index'));
+        quickReplyCategories.value = response.data;
+        if (quickReplyCategories.value.length > 0) {
+            selectedQuickCategory.value = quickReplyCategories.value[0].id;
+        }
+    } catch (error) {
+        console.error('Error fetching quick replies:', error);
+    }
+};
+
+const insertQuickReply = (reply) => {
+    newMessage.value = reply.body;
+    showQuickReplies.value = false;
+
+    // If has image, we'll need to handle that separately
+    if (reply.image_url) {
+        // For now just insert text, image sending would require more complex handling
+    }
+
+    // Focus the textarea
+    nextTick(() => {
+        if (messageInput.value) {
+            messageInput.value.focus();
+        }
+    });
+};
+
+const sendQuickReply = async (reply) => {
+    newMessage.value = reply.body;
+    showQuickReplies.value = false;
+    await sendMessage();
+};
+
 // Watch for newMessage changes to auto-resize
 watch(newMessage, () => {
     nextTick(() => {
@@ -953,6 +994,7 @@ onMounted(() => {
     // Fetch team members and notifications on load
     fetchTeamMembers();
     fetchTransferNotifications();
+    fetchQuickReplies();
 
     pollingInterval = setInterval(() => {
         fetchFilteredContacts();
@@ -1275,6 +1317,92 @@ onUnmounted(() => {
                                 d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                         </svg>
                     </button>
+
+                    <!-- Quick Replies Button -->
+                    <div class="relative">
+                        <button @click="showQuickReplies = !showQuickReplies" class="p-2 rounded-lg transition-colors"
+                            :class="showQuickReplies ? 'bg-indigo-600 text-white' : 'hover:bg-white/10 text-yellow-400'"
+                            title="Respuestas Rápidas">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </button>
+
+                        <!-- Quick Replies Popup -->
+                        <div v-if="showQuickReplies"
+                            class="absolute bottom-14 left-0 w-80 max-h-96 bg-slate-800 border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50">
+                            <!-- Header -->
+                            <div
+                                class="px-4 py-3 bg-slate-700/50 border-b border-white/10 flex items-center justify-between">
+                                <span class="font-medium text-white">⚡ Respuestas Rápidas</span>
+                                <button @click="showQuickReplies = false" class="text-slate-400 hover:text-white">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div v-if="quickReplyCategories.length === 0" class="p-6 text-center text-slate-400">
+                                <p class="mb-2">Sin respuestas configuradas</p>
+                                <a :href="route('quick-replies.manage')"
+                                    class="text-indigo-400 hover:text-indigo-300 text-sm">
+                                    Configurar respuestas →
+                                </a>
+                            </div>
+
+                            <template v-else>
+                                <!-- Category Tabs -->
+                                <div
+                                    class="flex overflow-x-auto gap-1 px-2 py-2 border-b border-white/10 bg-slate-700/30">
+                                    <button v-for="cat in quickReplyCategories" :key="cat.id"
+                                        @click="selectedQuickCategory = cat.id"
+                                        class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors"
+                                        :class="selectedQuickCategory === cat.id
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'text-slate-300 hover:bg-white/10'">
+                                        {{ cat.icon }} {{ cat.name }}
+                                    </button>
+                                </div>
+
+                                <!-- Replies List -->
+                                <div class="max-h-60 overflow-y-auto">
+                                    <template v-for="cat in quickReplyCategories" :key="'replies-' + cat.id">
+                                        <div v-if="selectedQuickCategory === cat.id">
+                                            <div v-for="reply in cat.replies" :key="reply.id"
+                                                class="px-4 py-3 hover:bg-white/5 cursor-pointer border-b border-white/5 group"
+                                                @click="insertQuickReply(reply)">
+                                                <div class="flex items-center justify-between mb-1">
+                                                    <span class="font-medium text-white text-sm">{{ reply.title
+                                                        }}</span>
+                                                    <button @click.stop="sendQuickReply(reply)"
+                                                        class="opacity-0 group-hover:opacity-100 p-1 bg-indigo-600 hover:bg-indigo-700 rounded text-white transition-all"
+                                                        title="Enviar directamente">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                                <p class="text-xs text-slate-400 line-clamp-2">{{ reply.body }}</p>
+                                                <div v-if="reply.image_url" class="mt-2">
+                                                    <img :src="reply.image_url" class="h-10 rounded object-cover"
+                                                        alt="Preview" />
+                                                </div>
+                                            </div>
+                                            <div v-if="!cat.replies?.length"
+                                                class="p-4 text-center text-slate-400 text-sm">
+                                                Sin respuestas en esta categoría
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
                     <textarea v-if="!isRecording" v-model="newMessage" @keydown="handleInputKeydown"
                         @paste="handlePaste" ref="messageInput"
                         placeholder="Escribe un mensaje (Shift+Enter para nueva línea)" rows="1"
