@@ -494,11 +494,12 @@ const handleInputKeydown = (event) => {
     }
     // Shift+Enter is allowed by default (adds new line)
 
-    // Auto-resize textarea
+    // Auto-resize textarea with responsive limits
     nextTick(() => {
         if (messageInput.value) {
+            const maxHeight = window.innerWidth >= 1024 ? 256 : window.innerWidth >= 640 ? 128 : 96;
             messageInput.value.style.height = 'auto';
-            messageInput.value.style.height = Math.min(messageInput.value.scrollHeight, 128) + 'px';
+            messageInput.value.style.height = Math.min(messageInput.value.scrollHeight, maxHeight) + 'px';
         }
     });
 };
@@ -507,8 +508,9 @@ const handleInputKeydown = (event) => {
 watch(newMessage, () => {
     nextTick(() => {
         if (messageInput.value) {
+            const maxHeight = window.innerWidth >= 1024 ? 256 : window.innerWidth >= 640 ? 128 : 96;
             messageInput.value.style.height = 'auto';
-            messageInput.value.style.height = Math.min(messageInput.value.scrollHeight, 128) + 'px';
+            messageInput.value.style.height = Math.min(messageInput.value.scrollHeight, maxHeight) + 'px';
         }
     });
 });
@@ -1257,8 +1259,7 @@ onUnmounted(() => {
                     </button>
                     <textarea v-if="!isRecording" v-model="newMessage" @keydown="handleInputKeydown" ref="messageInput"
                         placeholder="Escribe un mensaje (Shift+Enter para nueva línea)" rows="1"
-                        class="flex-1 px-5 py-3 rounded-xl bg-slate-700/50 border border-white/10 text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none max-h-32 overflow-y-auto leading-relaxed"
-                        :style="{ height: textareaHeight }"></textarea>
+                        class="flex-1 px-5 py-3 rounded-xl bg-slate-700/50 border border-white/10 text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none max-h-24 sm:max-h-32 lg:max-h-64 overflow-y-auto leading-relaxed"></textarea>
 
                     <!-- Recording UI -->
                     <div v-else
