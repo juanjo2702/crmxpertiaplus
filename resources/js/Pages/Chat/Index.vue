@@ -504,6 +504,24 @@ const handleInputKeydown = (event) => {
     });
 };
 
+// Clean text formatting (fix bullets on separate lines)
+const cleanMessageText = (text) => {
+    // Fix pattern: "• \n text" -> "• text"
+    let cleaned = text.replace(/•\s*\n\s*/g, '• ');
+    // Fix pattern: "text \n •" -> "text\n•"
+    cleaned = cleaned.replace(/\n\s*•/g, '\n•');
+    // Remove double line breaks
+    cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+    return cleaned;
+};
+
+// Handle paste to clean formatting
+const handlePaste = (event) => {
+    setTimeout(() => {
+        newMessage.value = cleanMessageText(newMessage.value);
+    }, 0);
+};
+
 // Watch for newMessage changes to auto-resize
 watch(newMessage, () => {
     nextTick(() => {
@@ -1257,7 +1275,8 @@ onUnmounted(() => {
                                 d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                         </svg>
                     </button>
-                    <textarea v-if="!isRecording" v-model="newMessage" @keydown="handleInputKeydown" ref="messageInput"
+                    <textarea v-if="!isRecording" v-model="newMessage" @keydown="handleInputKeydown"
+                        @paste="handlePaste" ref="messageInput"
                         placeholder="Escribe un mensaje (Shift+Enter para nueva línea)" rows="1"
                         class="flex-1 px-5 py-3 rounded-xl bg-slate-700/50 border border-white/10 text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none max-h-24 sm:max-h-32 lg:max-h-64 overflow-y-auto leading-relaxed"></textarea>
 
