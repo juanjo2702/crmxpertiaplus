@@ -63,14 +63,22 @@ const openCategoryModal = (category = null) => {
 
 const saveCategory = async () => {
     try {
+        let response;
         if (editingCategory.value) {
-            await axios.put(route('quick-replies.categories.update', editingCategory.value.id), categoryForm.value);
+            response = await axios.put(route('quick-replies.categories.update', editingCategory.value.id), categoryForm.value);
+            // Update local state
+            const index = categories.value.findIndex(c => c.id === editingCategory.value.id);
+            if (index !== -1) {
+                categories.value[index].name = response.data.name;
+                categories.value[index].icon = response.data.icon;
+            }
             showNotification('Categoría actualizada correctamente');
         } else {
-            await axios.post(route('quick-replies.categories.store'), categoryForm.value);
+            response = await axios.post(route('quick-replies.categories.store'), categoryForm.value);
+            // Add to local state
+            categories.value.push({ ...response.data, replies: [] });
             showNotification('Categoría creada correctamente');
         }
-        router.reload();
         showCategoryModal.value = false;
     } catch (error) {
         console.error('Error saving category:', error);
@@ -146,15 +154,33 @@ const saveReply = async () => {
             formData.append('remove_image', '1');
         }
 
+        let response;
         if (editingReply.value) {
-            await axios.post(route('quick-replies.update', editingReply.value.id), formData);
+            response = await axios.post(route('quick-replies.update', editingReply.value.id), formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            // Update local state
+            const cat = categories.value.find(c => c.replies?.some(r => r.id === editingReply.value.id));
+            if (cat) {
+                const replyIndex = cat.replies.findIndex(r => r.id === editingReply.value.id);
+                if (replyIndex !== -1) {
+                    cat.replies[replyIndex] = response.data;
+                }
+            }
             showNotification('Respuesta actualizada correctamente');
         } else {
             formData.append('category_id', selectedCategoryId.value);
-            await axios.post(route('quick-replies.store'), formData);
+            response = await axios.post(route('quick-replies.store'), formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            // Add to local state
+            const cat = categories.value.find(c => c.id === selectedCategoryId.value);
+            if (cat) {
+                if (!cat.replies) cat.replies = [];
+                cat.replies.push(response.data);
+            }
             showNotification('Respuesta creada correctamente');
         }
-        router.reload();
         showReplyModal.value = false;
     } catch (error) {
         console.error('Error saving reply:', error);
