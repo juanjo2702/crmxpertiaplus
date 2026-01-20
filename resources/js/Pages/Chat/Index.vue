@@ -233,6 +233,14 @@ const formatMessageText = (text) => {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 
+    // Auto-detect inline bullets and add line breaks before them
+    // Pattern: " • " or ": • " becomes newline + bullet
+    formatted = formatted.replace(/\s•\s/g, '\n• ');
+    formatted = formatted.replace(/:\s*•/g, ':\n•');
+
+    // Also handle numbered lists inline (1. 2. 3. etc after space)
+    formatted = formatted.replace(/\s(\d+)\.\s(?=[A-Z])/g, '\n$1. ');
+
     // Convert URLs to clickable links
     const urlRegex = /(https?:\/\/[^\s<]+[^\s<.,;:!?"'\])>])/gi;
     formatted = formatted.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener" class="text-indigo-300 hover:text-indigo-200 underline break-all">$1</a>');
@@ -253,23 +261,30 @@ const formatMessageText = (text) => {
     // `inline code` -> <code>inline</code>
     formatted = formatted.replace(/`([^`\n]+)`/g, '<code class="bg-black/30 px-1 rounded text-sm font-mono">$1</code>');
 
-    // Detect list items (lines starting with - or • or * followed by space)
+    // Process lines for list formatting
     const lines = formatted.split('\n');
     const processedLines = lines.map(line => {
         const trimmed = line.trim();
-        if (trimmed.match(/^[-•]\s+/)) {
-            return '<span class="flex gap-2"><span class="text-indigo-300">•</span><span>' + trimmed.replace(/^[-•]\s+/, '') + '</span></span>';
+        // Bullet list items
+        if (trimmed.match(/^•\s*/)) {
+            return '<div class="flex gap-2 items-start"><span class="text-indigo-300 mt-0.5">•</span><span>' + trimmed.replace(/^•\s*/, '') + '</span></div>';
+        }
+        if (trimmed.match(/^[-]\s+/)) {
+            return '<div class="flex gap-2 items-start"><span class="text-indigo-300 mt-0.5">•</span><span>' + trimmed.replace(/^[-]\s+/, '') + '</span></div>';
         }
         // Numbered lists (1. 2. etc)
         if (trimmed.match(/^\d+\.\s+/)) {
             const num = trimmed.match(/^(\d+)\./)[1];
-            return '<span class="flex gap-2"><span class="text-indigo-300 font-medium">' + num + '.</span><span>' + trimmed.replace(/^\d+\.\s+/, '') + '</span></span>';
+            return '<div class="flex gap-2 items-start"><span class="text-indigo-300 font-medium">' + num + '.</span><span>' + trimmed.replace(/^\d+\.\s+/, '') + '</span></div>';
         }
         return line;
     });
 
     // Join lines with <br> for line breaks
     formatted = processedLines.join('<br>');
+
+    // Clean up extra <br> before divs
+    formatted = formatted.replace(/<br><div/g, '<div');
 
     return formatted;
 };
@@ -1122,7 +1137,7 @@ onUnmounted(() => {
                                         <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                                             :class="getFileIconBg(item)">
                                             <span class="text-white text-xs font-bold">{{ getFileIconText(item)
-                                                }}</span>
+                                            }}</span>
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <p class="text-sm font-medium text-white truncate">{{
@@ -1341,7 +1356,7 @@ onUnmounted(() => {
                             <div>
                                 <span class="text-white block">{{ carrera.nombre }}</span>
                                 <span v-if="carrera.duracion" class="text-xs text-slate-500">{{ carrera.duracion
-                                    }}</span>
+                                }}</span>
                             </div>
                         </label>
                         <p v-if="!catalogs.carreras?.length" class="text-xs text-slate-500 italic">No hay carreras
