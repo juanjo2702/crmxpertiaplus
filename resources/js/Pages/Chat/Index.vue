@@ -223,6 +223,57 @@ const getDateKey = (dateString) => {
     return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 };
 
+// Format message text with rich formatting (links, bold, italic, line breaks)
+const formatMessageText = (text) => {
+    if (!text) return '';
+
+    // Escape HTML first to prevent XSS
+    let formatted = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    // Convert URLs to clickable links
+    const urlRegex = /(https?:\/\/[^\s<]+[^\s<.,;:!?"'\])>])/gi;
+    formatted = formatted.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener" class="text-indigo-300 hover:text-indigo-200 underline break-all">$1</a>');
+
+    // WhatsApp-style formatting:
+    // *bold* -> <strong>bold</strong>
+    formatted = formatted.replace(/\*([^*\n]+)\*/g, '<strong class="font-bold">$1</strong>');
+
+    // _italic_ -> <em>italic</em>
+    formatted = formatted.replace(/_([^_\n]+)_/g, '<em class="italic">$1</em>');
+
+    // ~strikethrough~ -> <del>strikethrough</del>
+    formatted = formatted.replace(/~([^~\n]+)~/g, '<del class="line-through">$1</del>');
+
+    // ```monospace``` -> <code>monospace</code>
+    formatted = formatted.replace(/```([^`]+)```/g, '<code class="bg-black/30 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>');
+
+    // `inline code` -> <code>inline</code>
+    formatted = formatted.replace(/`([^`\n]+)`/g, '<code class="bg-black/30 px-1 rounded text-sm font-mono">$1</code>');
+
+    // Detect list items (lines starting with - or • or * followed by space)
+    const lines = formatted.split('\n');
+    const processedLines = lines.map(line => {
+        const trimmed = line.trim();
+        if (trimmed.match(/^[-•]\s+/)) {
+            return '<span class="flex gap-2"><span class="text-indigo-300">•</span><span>' + trimmed.replace(/^[-•]\s+/, '') + '</span></span>';
+        }
+        // Numbered lists (1. 2. etc)
+        if (trimmed.match(/^\d+\.\s+/)) {
+            const num = trimmed.match(/^(\d+)\./)[1];
+            return '<span class="flex gap-2"><span class="text-indigo-300 font-medium">' + num + '.</span><span>' + trimmed.replace(/^\d+\.\s+/, '') + '</span></span>';
+        }
+        return line;
+    });
+
+    // Join lines with <br> for line breaks
+    formatted = processedLines.join('<br>');
+
+    return formatted;
+};
+
 const filteredContacts = computed(() => {
     if (!searchQuery.value.trim()) return contacts.value;
 
@@ -1106,7 +1157,8 @@ onUnmounted(() => {
                                 </template>
 
                                 <!-- Text Message -->
-                                <p v-else class="text-sm text-white break-words">{{ item.text }}</p>
+                                <div v-else class="text-sm text-white break-words leading-relaxed"
+                                    v-html="formatMessageText(item.text)"></div>
                                 <div class="flex items-center justify-end gap-1 mt-1">
                                     <span class="text-[10px] text-white/60">{{ item.time }}</span>
                                     <svg v-if="item.sender === 'me'" class="w-4 h-4 text-white/60" fill="currentColor"
