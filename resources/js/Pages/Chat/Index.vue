@@ -2,6 +2,7 @@
 import { Head, Link, usePage, router } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue';
 import axios from 'axios';
+import lamejs from 'lamejs';
 
 const props = defineProps({
     initialContacts: Array,
@@ -514,12 +515,10 @@ const stopRecording = () => {
     mediaRecorder.value.onstop = async () => {
         const mimeType = mediaRecorder.value.mimeType;
 
-        const finalExt = mimeType.includes('mp4') ? 'mp4' : 'ogg';
-        const type = mimeType.includes('mp4') ? 'audio/mp4' : 'audio/ogg';
-
         const audioBlob = new Blob(audioChunks.value, { type: mimeType });
-        // WhatsApp is picky. We use .mp4 or .ogg extension.
-        const audioFile = new File([audioBlob], `voice_note.${finalExt}`, { type: type });
+
+        // Convert to MP3 for WhatsApp compatibility
+        const audioFile = await convertToMp3(audioBlob);
 
         await sendAudio(audioFile);
 
@@ -544,6 +543,57 @@ const cancelRecording = () => {
         if (mediaRecorder.value.stream) {
             mediaRecorder.value.stream.getTracks().forEach(track => track.stop());
         }
+    }
+};
+
+// Convert audio blob to MP3 using lamejs for WhatsApp compatibility
+const convertToMp3 = async (audioBlob) => {
+    try {
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        const audioContext = new AudioContext();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+        const numChannels = 1; // Mono for voice
+        const sampleRate = audioBuffer.sampleRate;
+        const mp3encoder = new lamejs.Mp3Encoder(numChannels, sampleRate, 128);
+
+        // Get audio data as Float32Array
+        const samples = audioBuffer.getChannelData(0);
+
+        // Convert Float32Array to Int16Array
+        const int16Samples = new Int16Array(samples.length);
+        for (let i = 0; i < samples.length; i++) {
+            const s = Math.max(-1, Math.min(1, samples[i]));
+            int16Samples[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        }
+
+        // Encode to MP3
+        const mp3Data = [];
+        const blockSize = 1152;
+
+        for (let i = 0; i < int16Samples.length; i += blockSize) {
+            const chunk = int16Samples.subarray(i, i + blockSize);
+            const mp3buf = mp3encoder.encodeBuffer(chunk);
+            if (mp3buf.length > 0) {
+                mp3Data.push(mp3buf);
+            }
+        }
+
+        // Flush remaining
+        const end = mp3encoder.flush();
+        if (end.length > 0) {
+            mp3Data.push(end);
+        }
+
+        await audioContext.close();
+
+        // Create MP3 blob
+        const mp3Blob = new Blob(mp3Data, { type: 'audio/mpeg' });
+        return new File([mp3Blob], 'voice_note.mp3', { type: 'audio/mpeg' });
+    } catch (error) {
+        console.error('MP3 conversion failed:', error);
+        // Fallback to original
+        return new File([audioBlob], 'voice_note.ogg', { type: 'audio/ogg' });
     }
 };
 
@@ -855,7 +905,7 @@ onUnmounted(() => {
                                         <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                                             :class="getFileIconBg(item)">
                                             <span class="text-white text-xs font-bold">{{ getFileIconText(item)
-                                            }}</span>
+                                                }}</span>
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <p class="text-sm font-medium text-white truncate">{{
@@ -1073,7 +1123,7 @@ onUnmounted(() => {
                             <div>
                                 <span class="text-white block">{{ carrera.nombre }}</span>
                                 <span v-if="carrera.duracion" class="text-xs text-slate-500">{{ carrera.duracion
-                                }}</span>
+                                    }}</span>
                             </div>
                         </label>
                         <p v-if="!catalogs.carreras?.length" class="text-xs text-slate-500 italic">No hay carreras
