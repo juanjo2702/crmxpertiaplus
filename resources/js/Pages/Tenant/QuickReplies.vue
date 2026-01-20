@@ -86,8 +86,10 @@ const deleteCategory = (category) => {
         async () => {
             try {
                 await axios.delete(route('quick-replies.categories.destroy', category.id));
+                // Remove category from local state
+                const index = categories.value.findIndex(c => c.id === category.id);
+                if (index !== -1) categories.value.splice(index, 1);
                 showNotification('Categoría eliminada correctamente');
-                router.reload();
             } catch (error) {
                 console.error('Error deleting category:', error);
                 showNotification('Error al eliminar la categoría', 'error');
@@ -168,8 +170,13 @@ const deleteReply = (reply) => {
         async () => {
             try {
                 await axios.delete(route('quick-replies.destroy', reply.id));
+                // Remove reply from local state
+                const cat = categories.value.find(c => c.replies?.some(r => r.id === reply.id));
+                if (cat) {
+                    const replyIndex = cat.replies.findIndex(r => r.id === reply.id);
+                    if (replyIndex !== -1) cat.replies.splice(replyIndex, 1);
+                }
                 showNotification('Respuesta eliminada correctamente');
-                router.reload();
             } catch (error) {
                 console.error('Error deleting reply:', error);
                 showNotification('Error al eliminar la respuesta', 'error');
