@@ -2,7 +2,6 @@
 import { Head, Link, usePage, router } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue';
 import axios from 'axios';
-import lamejs from 'lamejs';
 
 const props = defineProps({
     initialContacts: Array,
@@ -549,13 +548,24 @@ const cancelRecording = () => {
 // Convert audio blob to MP3 using lamejs for WhatsApp compatibility
 const convertToMp3 = async (audioBlob) => {
     try {
+        // Load lamejs from CDN if not already loaded
+        if (!window.lamejs) {
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
         const arrayBuffer = await audioBlob.arrayBuffer();
         const audioContext = new AudioContext();
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
         const numChannels = 1; // Mono for voice
         const sampleRate = audioBuffer.sampleRate;
-        const mp3encoder = new lamejs.Mp3Encoder(numChannels, sampleRate, 128);
+        const mp3encoder = new window.lamejs.Mp3Encoder(numChannels, sampleRate, 128);
 
         // Get audio data as Float32Array
         const samples = audioBuffer.getChannelData(0);
@@ -905,7 +915,7 @@ onUnmounted(() => {
                                         <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                                             :class="getFileIconBg(item)">
                                             <span class="text-white text-xs font-bold">{{ getFileIconText(item)
-                                                }}</span>
+                                            }}</span>
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <p class="text-sm font-medium text-white truncate">{{
@@ -1123,7 +1133,7 @@ onUnmounted(() => {
                             <div>
                                 <span class="text-white block">{{ carrera.nombre }}</span>
                                 <span v-if="carrera.duracion" class="text-xs text-slate-500">{{ carrera.duracion
-                                    }}</span>
+                                }}</span>
                             </div>
                         </label>
                         <p v-if="!catalogs.carreras?.length" class="text-xs text-slate-500 italic">No hay carreras
