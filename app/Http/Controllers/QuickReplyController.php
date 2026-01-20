@@ -144,7 +144,7 @@ class QuickReplyController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('public/quick_replies');
+            $imagePath = $request->file('image')->store('quick_replies', 'public');
         }
 
         $maxOrder = QuickReply::where('category_id', $request->category_id)->max('order') ?? 0;
@@ -183,15 +183,15 @@ class QuickReplyController extends Controller
         ];
 
         if ($request->remove_image && $quickReply->image_path) {
-            Storage::delete($quickReply->image_path);
+            Storage::disk('public')->delete($quickReply->image_path);
             $data['image_path'] = null;
         }
 
         if ($request->hasFile('image')) {
             if ($quickReply->image_path) {
-                Storage::delete($quickReply->image_path);
+                Storage::disk('public')->delete($quickReply->image_path);
             }
-            $data['image_path'] = $request->file('image')->store('public/quick_replies');
+            $data['image_path'] = $request->file('image')->store('quick_replies', 'public');
         }
 
         $quickReply->update($data);
@@ -210,7 +210,7 @@ class QuickReplyController extends Controller
         $this->authorizeReply($quickReply);
 
         if ($quickReply->image_path) {
-            Storage::delete($quickReply->image_path);
+            Storage::disk('public')->delete($quickReply->image_path);
         }
 
         $quickReply->delete();

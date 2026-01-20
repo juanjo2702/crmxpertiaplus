@@ -43,6 +43,6 @@ class QuickReply extends Model
         if (!$this->image_path) {
             return null;
         }
-        return asset('storage/' . str_replace('public/', '', $this->image_path));
+        return asset('storage/' . $this->image_path);
     }
 }
