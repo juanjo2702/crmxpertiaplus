@@ -40,7 +40,8 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended(route('admin.dashboard', absolute: false));
         }
 
-        if ($user->isTenantAdmin()) {
+        // Any user with a tenant_id should go to tenant dashboard
+        if ($user->tenant_id) {
             return redirect()->intended(route('tenant.dashboard', absolute: false));
         }
 
