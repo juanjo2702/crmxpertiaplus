@@ -483,6 +483,35 @@ watch(chatFilter, () => {
 
 const newMessage = ref('');
 const isSending = ref(false);
+const messageInput = ref(null);
+const textareaHeight = ref('auto');
+
+// Handle keyboard shortcuts: Enter sends, Shift+Enter adds new line
+const handleInputKeydown = (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+    }
+    // Shift+Enter is allowed by default (adds new line)
+
+    // Auto-resize textarea
+    nextTick(() => {
+        if (messageInput.value) {
+            messageInput.value.style.height = 'auto';
+            messageInput.value.style.height = Math.min(messageInput.value.scrollHeight, 128) + 'px';
+        }
+    });
+};
+
+// Watch for newMessage changes to auto-resize
+watch(newMessage, () => {
+    nextTick(() => {
+        if (messageInput.value) {
+            messageInput.value.style.height = 'auto';
+            messageInput.value.style.height = Math.min(messageInput.value.scrollHeight, 128) + 'px';
+        }
+    });
+});
 
 const sendMessage = async () => {
     if (!newMessage.value.trim() || !selectedContact.value) return;
@@ -490,6 +519,11 @@ const sendMessage = async () => {
     const text = newMessage.value;
     newMessage.value = '';
     isSending.value = true;
+
+    // Reset textarea height
+    if (messageInput.value) {
+        messageInput.value.style.height = 'auto';
+    }
 
     const now = new Date().toISOString();
     const tempId = Date.now();
@@ -1221,9 +1255,10 @@ onUnmounted(() => {
                                 d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                         </svg>
                     </button>
-                    <input v-if="!isRecording" v-model="newMessage" @keyup.enter="sendMessage" type="text"
-                        placeholder="Escribe un mensaje"
-                        class="flex-1 px-5 py-3 rounded-xl bg-slate-700/50 border border-white/10 text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <textarea v-if="!isRecording" v-model="newMessage" @keydown="handleInputKeydown" ref="messageInput"
+                        placeholder="Escribe un mensaje (Shift+Enter para nueva línea)" rows="1"
+                        class="flex-1 px-5 py-3 rounded-xl bg-slate-700/50 border border-white/10 text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none max-h-32 overflow-y-auto leading-relaxed"
+                        :style="{ height: textareaHeight }"></textarea>
 
                     <!-- Recording UI -->
                     <div v-else
