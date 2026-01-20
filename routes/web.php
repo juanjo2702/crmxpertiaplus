@@ -84,6 +84,31 @@ Route::put('/chat/contact/{contact}', [ChatController::class, 'updateContact'])
     ->middleware(['auth', 'verified'])
     ->name('chat.contact.update');
 
+// Chat Assignment & Transfer Routes
+Route::post('/chat/{contact}/transfer', [ChatController::class, 'transferChat'])
+    ->middleware(['auth', 'verified'])
+    ->name('chat.transfer');
+
+Route::get('/chat/transfers', [ChatController::class, 'getTransferHistory'])
+    ->middleware(['auth', 'verified'])
+    ->name('chat.transfers');
+
+Route::get('/chat/notifications', [ChatController::class, 'getUserNotifications'])
+    ->middleware(['auth', 'verified'])
+    ->name('chat.notifications');
+
+Route::post('/chat/transfer/{transfer}/seen', [ChatController::class, 'markTransferSeen'])
+    ->middleware(['auth', 'verified'])
+    ->name('chat.transfer.seen');
+
+Route::get('/chat/team', [ChatController::class, 'getTeamMembers'])
+    ->middleware(['auth', 'verified'])
+    ->name('chat.team');
+
+Route::get('/chat/filter', [ChatController::class, 'filterContacts'])
+    ->middleware(['auth', 'verified'])
+    ->name('chat.filter');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

@@ -12,6 +12,7 @@ class Contact extends Model
         'email',
         'profile_pic',
         'tenant_id',
+        'assigned_to',
         'nivel_interes',
         'estado_crm',
         'notas_crm',
@@ -25,6 +26,28 @@ class Contact extends Model
     public function tenant()
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function assignedTo()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function transfers()
+    {
+        return $this->hasMany(ChatTransfer::class);
+    }
+
+    // Scope: Unassigned contacts (general pool)
+    public function scopeUnassigned($query)
+    {
+        return $query->whereNull('assigned_to');
+    }
+
+    // Scope: Contacts assigned to specific user
+    public function scopeAssignedToUser($query, $userId)
+    {
+        return $query->where('assigned_to', $userId);
     }
 
     // CRM Relationships

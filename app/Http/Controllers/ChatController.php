@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Contact;
 use App\Models\Message;
+use App\Models\ChatTransfer;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -197,6 +199,12 @@ class ChatController extends Controller
         ]);
 
         $text = $request->input('message');
+
+        // Auto-assign contact to current user if unassigned
+        if (is_null($contact->assigned_to)) {
+            $contact->assigned_to = Auth::id();
+            $contact->save();
+        }
 
         // Configure WhatsApp with Tenant credentials
         $this->configureWhatsApp($whatsapp);
@@ -495,5 +503,191 @@ class ChatController extends Controller
             // Fallback to .env (Default behavior of Service)
             Log::warning("Tenant {$tenant->id} has no WhatsApp credentials configured. Using system defaults from .env");
         }
+    }
+
+    /**
+     * Transfer a chat to another user
+     */
+    public function transferChat(Request $request, Contact $contact)
+    {
+        $request->validate([
+            'to_user_id' => 'required|exists:users,id',
+            'notes' => 'nullable|string|max:500'
+        ]);
+
+        $user = Auth::user();
+        $toUserId = $request->input('to_user_id');
+
+        // Security: Can only transfer if you own the chat or are admin
+        if ($contact->assigned_to !== $user->id && !$user->isTenantAdmin()) {
+            return response()->json(['error' => 'No tienes permiso para transferir este chat'], 403);
+        }
+
+        // Create transfer record
+        ChatTransfer::create([
+            'contact_id' => $contact->id,
+            'from_user_id' => $user->id,
+            'to_user_id' => $toUserId,
+            'notes' => $request->input('notes'),
+            'seen_by_recipient' => false,
+        ]);
+
+        // Update contact assignment
+        $contact->assigned_to = $toUserId;
+        $contact->save();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Get transfer history (admin only or for own transfers)
+     */
+    public function getTransferHistory(Request $request)
+    {
+        $user = Auth::user();
+        $query = ChatTransfer::with(['contact', 'fromUser', 'toUser'])
+            ->whereHas('contact', function ($q) use ($user) {
+                $q->where('tenant_id', $user->tenant_id);
+            });
+
+        // Filter by user if not admin
+        if (!$user->isTenantAdmin()) {
+            $query->where(function ($q) use ($user) {
+                $q->where('from_user_id', $user->id)
+                    ->orWhere('to_user_id', $user->id);
+            });
+        }
+
+        // Optional filter by user
+        if ($request->has('user_id')) {
+            $userId = $request->input('user_id');
+            $query->where(function ($q) use ($userId) {
+                $q->where('from_user_id', $userId)
+                    ->orWhere('to_user_id', $userId);
+            });
+        }
+
+        return response()->json(
+            $query->orderByDesc('created_at')->get()
+        );
+    }
+
+    /**
+     * Get pending transfer notifications for current user
+     */
+    public function getUserNotifications()
+    {
+        $userId = Auth::id();
+
+        $transfers = ChatTransfer::with(['contact', 'fromUser'])
+            ->where('to_user_id', $userId)
+            ->where('seen_by_recipient', false)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json($transfers);
+    }
+
+    /**
+     * Mark transfer notification as seen
+     */
+    public function markTransferSeen(ChatTransfer $transfer)
+    {
+        if ($transfer->to_user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $transfer->seen_by_recipient = true;
+        $transfer->save();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Get team members for transfer dropdown
+     */
+    public function getTeamMembers()
+    {
+        $user = Auth::user();
+
+        $members = User::where('tenant_id', $user->tenant_id)
+            ->where('id', '!=', $user->id)
+            ->select('id', 'name', 'apellidos')
+            ->get();
+
+        return response()->json($members);
+    }
+
+    /**
+     * Get contacts filtered by assignment
+     */
+    public function filterContacts(Request $request)
+    {
+        $user = Auth::user();
+        $tenantId = $user->tenant_id;
+        $filter = $request->input('filter', 'all'); // all, general, mine, user:{id}
+
+        $query = Contact::with(['messages' => function ($query) {
+            $query->orderBy('created_at', 'desc')->take(1);
+        }, 'assignedTo'])->where('tenant_id', $tenantId);
+
+        if ($filter === 'general') {
+            $query->unassigned();
+        } elseif ($filter === 'mine') {
+            $query->assignedToUser($user->id);
+        } elseif (str_starts_with($filter, 'user:')) {
+            // Admin filtering by specific user
+            if ($user->isTenantAdmin()) {
+                $userId = (int) substr($filter, 5);
+                $query->assignedToUser($userId);
+            }
+        }
+        // 'all' = no extra filter (admin sees all)
+
+        // For non-admins, limit to general + their own
+        if (!$user->isTenantAdmin() && $filter === 'all') {
+            $query->where(function ($q) use ($user) {
+                $q->whereNull('assigned_to')
+                    ->orWhere('assigned_to', $user->id);
+            });
+        }
+
+        return response()->json(
+            $query->withCount(['messages as unread_count' => function ($query) {
+                $query->where('direction', 'incoming')->whereNull('read_at');
+            }])
+                ->orderByDesc(
+                    Message::select('created_at')
+                        ->whereColumn('contact_id', 'contacts.id')
+                        ->orderByDesc('created_at')
+                        ->limit(1)
+                )
+                ->get()
+                ->map(function ($contact) {
+                    $lastMsg = $contact->messages->first();
+                    $lastMessageText = '';
+                    if ($lastMsg) {
+                        $lastMessageText = match ($lastMsg->type) {
+                            'image' => '📷 Imagen',
+                            'video' => '🎥 Video',
+                            'audio' => '🎵 Audio',
+                            'document' => '📄 Documento',
+                            'sticker' => '🎨 Sticker',
+                            default => $lastMsg->body
+                        };
+                    }
+
+                    return [
+                        'id' => $contact->id,
+                        'name' => $contact->name ?? $contact->wa_id,
+                        'avatar' => $contact->profile_pic,
+                        'time' => $lastMsg ? $lastMsg->created_at->toIso8601String() : '',
+                        'lastMessage' => $lastMessageText,
+                        'unread' => $contact->unread_count,
+                        'assigned_to' => $contact->assigned_to,
+                        'assigned_user' => $contact->assignedTo ? $contact->assignedTo->name : null,
+                    ];
+                })
+        );
     }
 }

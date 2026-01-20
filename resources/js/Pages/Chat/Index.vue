@@ -29,6 +29,17 @@ const imageInput = ref(null);
 const documentInput = ref(null);
 const isDragging = ref(false);
 
+// Chat Assignment State
+const chatFilter = ref('all'); // 'all', 'general', 'mine', 'user:X'
+const teamMembers = ref([]);
+const transferNotifications = ref([]);
+const showTransferModal = ref(false);
+const transferToUser = ref(null);
+const transferNotes = ref('');
+const showTransferHistory = ref(false);
+const transferHistory = ref([]);
+const isAdmin = computed(() => user.value?.role?.name === 'tenant_admin');
+
 // CRM State
 const showCrmPanel = ref(true);
 const crmLoading = ref(false);
@@ -318,6 +329,91 @@ const fetchContacts = async () => {
         console.error("Error fetching contacts", error);
     }
 };
+
+// Chat Assignment Functions
+const fetchFilteredContacts = async () => {
+    try {
+        const response = await axios.get(route('chat.filter'), { params: { filter: chatFilter.value } });
+        contacts.value = response.data.map(contact => ({
+            ...contact,
+            relativeDate: formatRelativeDate(contact.time, true),
+            formattedTime: formatTime(contact.time)
+        }));
+    } catch (error) {
+        console.error("Error fetching filtered contacts", error);
+    }
+};
+
+const fetchTeamMembers = async () => {
+    try {
+        const response = await axios.get(route('chat.team'));
+        teamMembers.value = response.data;
+    } catch (error) {
+        console.error("Error fetching team members", error);
+    }
+};
+
+const fetchTransferNotifications = async () => {
+    try {
+        const response = await axios.get(route('chat.notifications'));
+        transferNotifications.value = response.data;
+    } catch (error) {
+        console.error("Error fetching notifications", error);
+    }
+};
+
+const fetchTransferHistory = async () => {
+    try {
+        const response = await axios.get(route('chat.transfers'));
+        transferHistory.value = response.data;
+    } catch (error) {
+        console.error("Error fetching transfer history", error);
+    }
+};
+
+const openTransferModal = () => {
+    if (!selectedContact.value) return;
+    if (teamMembers.value.length === 0) fetchTeamMembers();
+    transferToUser.value = null;
+    transferNotes.value = '';
+    showTransferModal.value = true;
+};
+
+const submitTransfer = async () => {
+    if (!selectedContact.value || !transferToUser.value) return;
+    try {
+        await axios.post(route('chat.transfer', selectedContact.value.id), {
+            to_user_id: transferToUser.value,
+            notes: transferNotes.value
+        });
+        showTransferModal.value = false;
+        alert('Chat transferido exitosamente');
+        await fetchFilteredContacts();
+        selectedContact.value = null;
+    } catch (error) {
+        console.error("Error transferring chat", error);
+        alert('Error al transferir chat');
+    }
+};
+
+const markNotificationSeen = async (transfer) => {
+    try {
+        await axios.post(route('chat.transfer.seen', transfer.id));
+        transferNotifications.value = transferNotifications.value.filter(t => t.id !== transfer.id);
+    } catch (error) {
+        console.error("Error marking notification seen", error);
+    }
+};
+
+const changeFilter = async (newFilter) => {
+    chatFilter.value = newFilter;
+    await fetchFilteredContacts();
+};
+
+// Watch filter changes
+watch(chatFilter, () => {
+    fetchFilteredContacts();
+});
 
 const newMessage = ref('');
 const isSending = ref(false);
@@ -734,8 +830,13 @@ const handleDrop = (event) => {
 };
 
 onMounted(() => {
+    // Fetch team members and notifications on load
+    fetchTeamMembers();
+    fetchTransferNotifications();
+
     pollingInterval = setInterval(() => {
-        fetchContacts();
+        fetchFilteredContacts();
+        fetchTransferNotifications();
         if (selectedContact.value) {
             fetchMessages();
         }
@@ -833,6 +934,47 @@ onUnmounted(() => {
                 </div>
             </div>
 
+            <!-- Filter Tabs -->
+            <div class="px-4 py-2 border-b border-white/10 flex items-center gap-2 flex-wrap">
+                <button @click="changeFilter('all')"
+                    :class="chatFilter === 'all' ? 'bg-indigo-500 text-white' : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                    Todos
+                </button>
+                <button @click="changeFilter('general')"
+                    :class="chatFilter === 'general' ? 'bg-indigo-500 text-white' : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                    General
+                </button>
+                <button @click="changeFilter('mine')"
+                    :class="chatFilter === 'mine' ? 'bg-indigo-500 text-white' : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                    Mis Chats
+                </button>
+
+                <!-- Admin: Filter by user dropdown -->
+                <select v-if="isAdmin" @change="changeFilter('user:' + $event.target.value)"
+                    class="ml-auto px-2 py-1.5 rounded-lg bg-slate-700/50 text-slate-300 text-xs border border-white/10">
+                    <option value="">Por Usuario</option>
+                    <option v-for="member in teamMembers" :key="member.id" :value="member.id">
+                        {{ member.name }}
+                    </option>
+                </select>
+
+                <!-- Notification Bell -->
+                <button v-if="transferNotifications.length > 0" @click="showTransferHistory = true"
+                    class="relative p-1.5 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span
+                        class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                        {{ transferNotifications.length }}
+                    </span>
+                </button>
+            </div>
+
             <!-- Contact List -->
             <div class="flex-1 overflow-y-auto">
                 <div v-if="filteredContacts.length === 0" class="p-6 text-center text-slate-400">
@@ -881,9 +1023,23 @@ onUnmounted(() => {
                         </div>
                         <div class="ml-3">
                             <h3 class="font-semibold text-white">{{ selectedContact.name }}</h3>
-                            <p class="text-xs text-green-400">En línea</p>
+                            <p v-if="selectedContact.assigned_user" class="text-xs text-amber-400">
+                                Asignado a: {{ selectedContact.assigned_user }}
+                            </p>
+                            <p v-else class="text-xs text-green-400">Pool General</p>
                         </div>
                     </div>
+
+                    <!-- Transfer Button -->
+                    <button v-if="selectedContact.assigned_to" @click="openTransferModal"
+                        class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
+                        title="Transferir chat">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        Transferir
+                    </button>
                 </div>
 
                 <!-- Messages -->
@@ -915,7 +1071,7 @@ onUnmounted(() => {
                                         <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                                             :class="getFileIconBg(item)">
                                             <span class="text-white text-xs font-bold">{{ getFileIconText(item)
-                                            }}</span>
+                                                }}</span>
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <p class="text-sm font-medium text-white truncate">{{
@@ -1133,7 +1289,7 @@ onUnmounted(() => {
                             <div>
                                 <span class="text-white block">{{ carrera.nombre }}</span>
                                 <span v-if="carrera.duracion" class="text-xs text-slate-500">{{ carrera.duracion
-                                }}</span>
+                                    }}</span>
                             </div>
                         </label>
                         <p v-if="!catalogs.carreras?.length" class="text-xs text-slate-500 italic">No hay carreras
@@ -1294,6 +1450,83 @@ onUnmounted(() => {
                         class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                     {{ isInitiating ? 'Iniciando...' : 'Iniciar Chat' }}
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Modal -->
+    <div v-if="showTransferModal"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-slate-800 rounded-2xl p-6 w-full max-w-md border border-white/10 shadow-2xl">
+            <h3 class="text-xl font-bold text-white mb-4">Transferir Chat</h3>
+            <p class="text-sm text-slate-400 mb-4">Transferir "{{ selectedContact?.name }}" a otro usuario</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Usuario Destino</label>
+                    <select v-model="transferToUser"
+                        class="w-full px-4 py-2 rounded-lg bg-slate-700/50 border border-white/10 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <option :value="null">Seleccionar usuario...</option>
+                        <option v-for="member in teamMembers" :key="member.id" :value="member.id">
+                            {{ member.name }} {{ member.apellidos || '' }}
+                        </option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Nota (opcional)</label>
+                    <textarea v-model="transferNotes" rows="2" placeholder="Motivo de la transferencia..."
+                        class="w-full px-4 py-2 rounded-lg bg-slate-700/50 border border-white/10 text-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none"></textarea>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button @click="showTransferModal = false"
+                        class="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors">
+                        Cancelar
+                    </button>
+                    <button @click="submitTransfer" :disabled="!transferToUser"
+                        class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        Transferir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications/History Modal -->
+    <div v-if="showTransferHistory"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div
+            class="bg-slate-800 rounded-2xl p-6 w-full max-w-lg border border-white/10 shadow-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">Chats Transferidos</h3>
+                <button @click="showTransferHistory = false" class="text-slate-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div v-if="transferNotifications.length === 0" class="text-center text-slate-400 py-8">
+                No tienes transferencias pendientes
+            </div>
+
+            <div v-else class="space-y-3 overflow-y-auto flex-1">
+                <div v-for="transfer in transferNotifications" :key="transfer.id"
+                    class="p-4 bg-slate-700/50 rounded-lg border border-white/10">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-white font-medium">{{ transfer.contact?.name }}</p>
+                            <p class="text-sm text-slate-400">De: {{ transfer.from_user?.name }}</p>
+                            <p v-if="transfer.notes" class="text-sm text-amber-400 mt-1">"{{ transfer.notes }}"</p>
+                        </div>
+                        <button @click="markNotificationSeen(transfer)"
+                            class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-lg transition-colors">
+                            Aceptar
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
