@@ -558,9 +558,29 @@ const insertQuickReply = (reply) => {
 };
 
 const sendQuickReply = async (reply) => {
-    newMessage.value = reply.body;
     showQuickReplies.value = false;
-    await sendMessage();
+
+    // If has image, send it with the text as caption
+    if (reply.image_url) {
+        try {
+            // Fetch the image from URL and convert to File
+            const response = await fetch(reply.image_url);
+            const blob = await response.blob();
+            const file = new File([blob], 'quick_reply_image.jpg', { type: blob.type });
+
+            // Send image with text as caption
+            await sendSingleImage(file, reply.body);
+        } catch (error) {
+            console.error('Error sending quick reply image:', error);
+            // Fallback to text only
+            newMessage.value = reply.body;
+            await sendMessage();
+        }
+    } else {
+        // Text only
+        newMessage.value = reply.body;
+        await sendMessage();
+    }
 };
 
 // Watch for newMessage changes to auto-resize
@@ -1233,7 +1253,7 @@ onUnmounted(() => {
                                         <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                                             :class="getFileIconBg(item)">
                                             <span class="text-white text-xs font-bold">{{ getFileIconText(item)
-                                            }}</span>
+                                                }}</span>
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <p class="text-sm font-medium text-white truncate">{{
@@ -1375,7 +1395,7 @@ onUnmounted(() => {
                                                 @click="insertQuickReply(reply)">
                                                 <div class="flex items-center justify-between mb-1">
                                                     <span class="font-medium text-white text-sm">{{ reply.title
-                                                        }}</span>
+                                                    }}</span>
                                                     <button @click.stop="sendQuickReply(reply)"
                                                         class="opacity-0 group-hover:opacity-100 p-1 bg-indigo-600 hover:bg-indigo-700 rounded text-white transition-all"
                                                         title="Enviar directamente">
@@ -1539,7 +1559,7 @@ onUnmounted(() => {
                             <div>
                                 <span class="text-white block">{{ carrera.nombre }}</span>
                                 <span v-if="carrera.duracion" class="text-xs text-slate-500">{{ carrera.duracion
-                                }}</span>
+                                    }}</span>
                             </div>
                         </label>
                         <p v-if="!catalogs.carreras?.length" class="text-xs text-slate-500 italic">No hay carreras
