@@ -28,9 +28,9 @@ class SuperAdminSeeder extends Seeder
             ['label' => 'Administrador de Empresa']
         );
 
-        $employeeRole = Role::firstOrCreate(
-            ['name' => 'employee'],
-            ['label' => 'Empleado']
+        $agentRole = Role::firstOrCreate(
+            ['name' => 'agent'],
+            ['label' => 'Agente']
         );
 
         // 2. Create System Tenant (Optional, for the owners)

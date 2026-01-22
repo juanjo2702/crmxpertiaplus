@@ -72,4 +72,10 @@ class User extends Authenticatable
     {
         return $this->role && $this->role->name === 'tenant_admin';
     }
+
+    // Helper to check if user is Agent
+    public function isAgent()
+    {
+        return $this->role && $this->role->name === 'agent';
+    }
 }

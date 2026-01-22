@@ -178,17 +178,25 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureUserIsSuperAdm
     Route::resource('tenants', \App\Http\Controllers\TenantController::class);
 });
 
-// Tenant Admin Routes
-Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureUserIsTenantAdmin::class])->prefix('empresa')->name('tenant.')->group(function () {
+// Tenant Routes - Accessible by all tenant users (employees + admins)
+Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureUserBelongsToTenant::class])->prefix('empresa')->name('tenant.')->group(function () {
+    // Dashboard for all tenant users
     Route::get('/dashboard', [\App\Http\Controllers\TenantAdminController::class, 'dashboard'])->name('dashboard');
+});
+
+// Tenant Admin Only Routes - Only for tenant_admin role
+Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureUserIsTenantAdmin::class])->prefix('empresa')->name('tenant.')->group(function () {
+    // User management - Admin only
     Route::get('/usuarios', [\App\Http\Controllers\TenantAdminController::class, 'users'])->name('users');
     Route::post('/usuarios', [\App\Http\Controllers\TenantAdminController::class, 'storeUser'])->name('users.store');
     Route::delete('/usuarios/{user}', [\App\Http\Controllers\TenantAdminController::class, 'destroyUser'])->name('users.destroy');
+
+    // Settings - Admin only
     Route::get('/configuracion', [\App\Http\Controllers\TenantAdminController::class, 'settings'])->name('settings');
     Route::post('/configuracion', [\App\Http\Controllers\TenantAdminController::class, 'updateSettings'])->name('settings.update');
     Route::post('/password', [\App\Http\Controllers\TenantAdminController::class, 'updatePassword'])->name('password.update');
 
-    // Catalogs
+    // Catalogs - Admin only
     // Sedes
     Route::get('/sedes', [\App\Http\Controllers\TenantCatalogController::class, 'sedes'])->name('sedes');
     Route::post('/sedes', [\App\Http\Controllers\TenantCatalogController::class, 'storeSede'])->name('sedes.store');

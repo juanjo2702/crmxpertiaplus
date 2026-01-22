@@ -40,7 +40,17 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended(route('admin.dashboard', absolute: false));
         }
 
-        // Any user with a tenant_id should go to tenant dashboard
+        // Agents go directly to chat
+        if ($user->isAgent()) {
+            return redirect()->intended(route('chat', absolute: false));
+        }
+
+        // Tenant admins go to tenant dashboard
+        if ($user->isTenantAdmin()) {
+            return redirect()->intended(route('tenant.dashboard', absolute: false));
+        }
+
+        // Any other user with a tenant_id should go to tenant dashboard
         if ($user->tenant_id) {
             return redirect()->intended(route('tenant.dashboard', absolute: false));
         }

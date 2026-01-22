@@ -23,12 +23,12 @@ const form = useForm({
     ci: '',
     email: '',
     phone: '',
-    role: 'employee', // Default to employee
+    role: 'agent', // Default to agent
 });
 
 const roles = [
     { value: 'tenant_admin', label: 'Administrador', description: 'Acceso completo al CRM' },
-    { value: 'employee', label: 'Empleado', description: 'Acceso al chat y funciones básicas' },
+    { value: 'agent', label: 'Agente', description: 'Solo ve sus chats y los chats sin asignar' },
 ];
 
 const submitCreate = () => {

@@ -104,7 +104,7 @@ class TenantAdminController extends Controller
             'ci' => 'required|string|max:20',
             'email' => 'required|email|unique:users,email',
             'phone' => 'nullable|string|max:50',
-            'role' => 'required|in:tenant_admin,employee',
+            'role' => 'required|in:tenant_admin,agent',
         ]);
 
         // Generate password
